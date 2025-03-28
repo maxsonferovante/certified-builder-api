@@ -52,7 +52,7 @@ public class CertificateConstructionOrder {
                 });
 
         List<Integer> existingOrders = new ArrayList<>();
-        List<Integer> newOrders = new ArrayList<>();
+        List<TechOrdersResponse> newOrders = new ArrayList<>();
 
         for (TechOrdersResponse order : orders) {
             // Cria ou recupera o participante
@@ -83,12 +83,12 @@ public class CertificateConstructionOrder {
                 newOrder.setOrderDate(LocalDateTime.parse(order.getOrderDate(), formatter));
 
                 orderRespository.save(newOrder);
-                newOrders.add(order.getOrderId());
+                newOrders.add(order);
             }
         }
 
-
-        orderEventPublisher.publishOrderCreatedEvent(orders);
+        // envia as novas orders para geração dos certificados
+        orderEventPublisher.publishOrderCreatedEvent(newOrders);
 
         // Retorno montado com os dados necessários
         return BuildOrdersResponse.builder()
@@ -96,7 +96,7 @@ public class CertificateConstructionOrder {
                 .productName(productEntity.getProductName())
                 .certificateQuantity(newOrders.size()) // Contagem das ordens criadas
                 .existingOrders(existingOrders) // Lista de ordens já existentes
-                .newOrders(newOrders)           // Lista de novas ordens
+                .newOrders(newOrders.stream().map(TechOrdersResponse::getOrderId).toList())           // Lista de novas ordens
                 .build();
     }
 }
