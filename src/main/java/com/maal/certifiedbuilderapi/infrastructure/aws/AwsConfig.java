@@ -10,13 +10,13 @@ import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 @Configuration
 public class AwsConfig {
 
-    @Value("${cloud.aws.credentials.accessKey}")
+    @Value("${spring.cloud.aws.credentials.accessKey}")
     private String accessKeyId;
 
-    @Value("${cloud.aws.credentials.secretKey}")
+    @Value("${spring.cloud.aws.credentials.secretKey}")
     private String secretAccessKey;
 
-    @Value("${cloud.aws.region.static}")
+    @Value("${spring.cloud.aws.region.static}")
     private String region;
 
     @Bean
