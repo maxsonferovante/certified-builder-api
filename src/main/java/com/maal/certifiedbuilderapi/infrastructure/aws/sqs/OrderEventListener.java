@@ -28,12 +28,11 @@ public class OrderEventListener {
 
     @SqsListener(value = "${cloud.aws.queue-name-notification-generation}")
     public void ReceiverOrderEvent(OrderEvent orderEvent) {
-        logger.info("Received order event for orderId: {}", orderEvent.getOrderId());
         processOrderEvent(orderEvent);
     }
 
     private void processOrderEvent(OrderEvent orderEvent) {
-        logger.info("Processing order event for orderId: {}", orderEvent.getOrderId());
+        logger.info("Received and Processing order event for orderId: {}", orderEvent.getOrderId());
         Optional<OrderEntity> orderEntity = orderRespository.findByOrderId(orderEvent.getOrderId());
         if (orderEntity.isPresent()) {
             logger.info("Found order entity for orderId: {}", orderEntity.get().getOrderId());
@@ -47,7 +46,7 @@ public class OrderEventListener {
                     });
 
             logger.info("Found certificate for orderId: {}", orderEntity.get().getOrderId());
-            logger.info("Certificate generated for orderId: {} - {}", orderEntity.get().getOrderId(), certificateEntity.getCertificateKey());
+            logger.info("Certificate generated for orderId: {} - {}", orderEntity.get().getOrderId(), certificateEntity.getSuccess());
         } else {
             logger.info("No order found for orderId: {}", orderEvent.getOrderId());
         }
