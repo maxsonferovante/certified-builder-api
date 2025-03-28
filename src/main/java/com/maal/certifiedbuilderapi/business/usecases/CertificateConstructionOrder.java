@@ -8,7 +8,7 @@ import com.maal.certifiedbuilderapi.domain.entity.ProductEntity;
 import com.maal.certifiedbuilderapi.infrastructure.aws.sqs.OrderEventPublisher;
 import com.maal.certifiedbuilderapi.infrastructure.client.TechFloripa;
 import com.maal.certifiedbuilderapi.infrastructure.client.response.TechOrdersResponse;
-import com.maal.certifiedbuilderapi.infrastructure.repository.OrderRespository;
+import com.maal.certifiedbuilderapi.infrastructure.repository.OrderRepository;
 import com.maal.certifiedbuilderapi.infrastructure.repository.ParticipantRespository;
 import com.maal.certifiedbuilderapi.infrastructure.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +25,7 @@ import java.util.Optional;
 public class CertificateConstructionOrder {
 
     private final TechFloripa techFloripa;
-    private final OrderRespository orderRespository;
+    private final OrderRepository orderRepository;
     private final ParticipantRespository participantRespository;
     private final ProductRepository productRepository;
 
@@ -69,7 +69,7 @@ public class CertificateConstructionOrder {
                     });
 
             // Verifica se a ordem já existe
-            Optional<OrderEntity> existingOrder = orderRespository.findByOrderId(order.getOrderId());
+            Optional<OrderEntity> existingOrder = orderRepository.findByOrderId(order.getOrderId());
 
             if (existingOrder.isPresent()) {
                 existingOrders.add(order.getOrderId());
@@ -82,7 +82,7 @@ public class CertificateConstructionOrder {
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
                 newOrder.setOrderDate(LocalDateTime.parse(order.getOrderDate(), formatter));
 
-                orderRespository.save(newOrder);
+                orderRepository.save(newOrder);
                 newOrders.add(order);
             }
         }
