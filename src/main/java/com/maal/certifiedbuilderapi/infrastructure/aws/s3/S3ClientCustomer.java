@@ -34,4 +34,13 @@ public class S3ClientCustomer {
             return null;
         }
     }
+    public void deleteCertificate(String key) {
+        try {
+            s3Template.deleteObject(s3Properties.getBucketName(), key);
+            logger.info("Successfully deleted key {}", key);
+        }
+        catch (Exception e){
+            logger.error(e.getMessage());
+        }
+    }
 }
