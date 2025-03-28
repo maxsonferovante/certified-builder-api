@@ -26,7 +26,7 @@ public class OrderEventListener {
     private final OrderRespository orderRespository;
     private final CertificateRepository certificateRepository;
 
-    @SqsListener(value = "${cloud.aws.queue-name-notification-generation}")
+    @SqsListener(value = "${spring.cloud.aws.queue.name.notification.generation}")
     public void ReceiverOrderEvent(OrderEvent orderEvent) {
         processOrderEvent(orderEvent);
     }

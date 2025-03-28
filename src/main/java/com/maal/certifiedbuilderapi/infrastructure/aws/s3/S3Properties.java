@@ -1,4 +1,5 @@
-package com.maal.certifiedbuilderapi.infrastructure.aws.sqs;
+package com.maal.certifiedbuilderapi.infrastructure.aws.s3;
+
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -6,19 +7,14 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.stereotype.Component;
 
-
-
-//POJO to represent these properties
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@ConfigurationProperties(prefix = "events.queues")
-public class EventQueuesProperties {
-//    builder-queue
-    @Value("${spring.cloud.aws.sqs.queue-name}")
-    private String builderQueueName;
-
+@Component
+public class S3Properties {
+    @Value("${spring.cloud.aws.s3.bucket.name}")
+    private String bucketName;
 }
-
