@@ -5,6 +5,7 @@ import com.maal.certifiedbuilderapi.business.dto.BuildOrdersResponse;
 import com.maal.certifiedbuilderapi.domain.entity.OrderEntity;
 import com.maal.certifiedbuilderapi.domain.entity.ParticipantEntity;
 import com.maal.certifiedbuilderapi.domain.entity.ProductEntity;
+import com.maal.certifiedbuilderapi.infrastructure.aws.sqs.OrderEventPublisher;
 import com.maal.certifiedbuilderapi.infrastructure.client.TechFloripa;
 import com.maal.certifiedbuilderapi.infrastructure.client.response.TechOrdersResponse;
 import com.maal.certifiedbuilderapi.infrastructure.repository.OrderRespository;
@@ -27,6 +28,8 @@ public class CertificateConstructionOrder {
     private final OrderRespository orderRespository;
     private final ParticipantRespository participantRespository;
     private final ProductRepository productRepository;
+
+    private final OrderEventPublisher orderEventPublisher;
 
     public BuildOrdersResponse execute(BuildOrdersRequest request) {
 
@@ -83,6 +86,9 @@ public class CertificateConstructionOrder {
                 newOrders.add(order.getOrderId());
             }
         }
+
+
+        orderEventPublisher.publishOrderCreatedEvent(orders);
 
         // Retorno montado com os dados necessários
         return BuildOrdersResponse.builder()
