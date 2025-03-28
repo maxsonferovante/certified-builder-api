@@ -1,9 +1,13 @@
 package com.maal.certifiedbuilderapi.domain.entity;
+
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
+
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -14,8 +18,13 @@ public class OrderEntity {
     @Id
     private String id;
 
+    //  Documentos Incorporados (Embedded Documents)
+    @Field("product")
+    private ProductEntity product;  // Produto incorporado no documento
+
+    @Field("participant")
+    private ParticipantEntity participant;  // Participante incorporado no documento
+
     private Integer orderId;
-    private Integer productId;
-    private String participantId;
-    private String orderDate;
+    private LocalDateTime orderDate;
 }
