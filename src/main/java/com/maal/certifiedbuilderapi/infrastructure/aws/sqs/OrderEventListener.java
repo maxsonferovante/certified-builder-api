@@ -1,6 +1,5 @@
 package com.maal.certifiedbuilderapi.infrastructure.aws.sqs;
 
-
 import com.maal.certifiedbuilderapi.domain.entity.CertificateEntity;
 import com.maal.certifiedbuilderapi.domain.entity.OrderEntity;
 import com.maal.certifiedbuilderapi.infrastructure.aws.sqs.payload.OrderEvent;
@@ -8,15 +7,12 @@ import com.maal.certifiedbuilderapi.infrastructure.repository.CertificateReposit
 import com.maal.certifiedbuilderapi.infrastructure.repository.OrderRespository;
 import io.awspring.cloud.sqs.annotation.SqsListener;
 
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.annotation.Retention;
 import java.util.Optional;
-
 
 @Component
 @RequiredArgsConstructor
@@ -37,7 +33,16 @@ public class OrderEventListener {
         if (orderEntity.isPresent()) {
             logger.info("Found order entity for orderId: {}", orderEntity.get().getOrderId());
             CertificateEntity certificateEntity = certificateRepository.findByOrder(orderEntity.get())
-                    .orElseGet(() ->{
+                    .map(existingCertificate -> {
+                        if (!existingCertificate.getSuccess() && orderEvent.getSuccess()) {
+                            logger.info("Updating certificate for orderId: {} with success=true", orderEntity.get().getOrderId());
+                            existingCertificate.setCertificateKey(orderEvent.getCertificateKey());
+                            existingCertificate.setSuccess(orderEvent.getSuccess());
+                            return certificateRepository.save(existingCertificate);
+                        }
+                        return existingCertificate;
+                    })
+                    .orElseGet(() -> {
                         CertificateEntity certificate = new CertificateEntity();
                         certificate.setCertificateKey(orderEvent.getCertificateKey());
                         certificate.setSuccess(orderEvent.getSuccess());
@@ -45,11 +50,9 @@ public class OrderEventListener {
                         return certificateRepository.save(certificate);
                     });
 
-            logger.info("Found certificate for orderId: {}", orderEntity.get().getOrderId());
             logger.info("Certificate generated for orderId: {} - {}", orderEntity.get().getOrderId(), certificateEntity.getSuccess());
         } else {
             logger.info("No order found for orderId: {}", orderEvent.getOrderId());
         }
-
     }
 }
