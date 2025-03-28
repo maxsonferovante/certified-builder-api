@@ -41,6 +41,11 @@ dependencies {
     implementation 'org.mapstruct:mapstruct:1.5.3.Final'
     annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.3.Final'
     annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
+
+    // https://mvnrepository.com/artifact/io.awspring.cloud/spring-cloud-aws-starter
+    implementation 'io.awspring.cloud:spring-cloud-aws-starter:3.3.0'
+    implementation 'io.awspring.cloud:spring-cloud-aws-starter-sqs:3.3.0'
+
 }
 
 dependencyManagement {
