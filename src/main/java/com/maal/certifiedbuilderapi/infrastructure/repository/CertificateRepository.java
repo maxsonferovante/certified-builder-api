@@ -8,4 +8,5 @@ import java.util.Optional;
 
 public interface CertificateRepository extends MongoRepository<CertificateEntity, String> {
     Optional<CertificateEntity> findByOrder(OrderEntity order);
+    void deleteByOrder_Product_ProductId(Integer productId);
 }
