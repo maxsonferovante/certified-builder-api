@@ -1,10 +1,10 @@
 HELP.md
 .gradle
 build/
-!gradle/wrapper/gradle-wrapper.jar
-!**/src/main/**/build/
-!**/src/test/**/build/
-!build/libs/certified-builder-api-0.0.1-SNAPSHOT.jar
+gradle/wrapper/gradle-wrapper.jar
+**/src/main/**/build/
+**/src/test/**/build/
+build/libs/certified-builder-api-0.0.1-SNAPSHOT.jar
 
 ### STS ###
 .apt_generated
