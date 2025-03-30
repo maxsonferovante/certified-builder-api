@@ -1,5 +1,5 @@
 # Build stage
-FROM eclipse-temurin:24-jdk-alpine AS build
+FROM eclipse-temurin:21-jdk-alpine AS build
 
 # Set Gradle version
 ENV GRADLE_VERSION=8.13
@@ -29,10 +29,10 @@ COPY gradle ./gradle
 COPY src ./src
 
 # Build the application
-RUN gradle build -x test
+RUN gradle build
 
 # Runtime stage
-FROM eclipse-temurin:24-jre-alpine
+FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
 
@@ -40,8 +40,9 @@ WORKDIR /app
 COPY --from=build /app/build/libs/*.jar app.jar
 
 # Expose the port the app runs on
-EXPOSE 8080
+EXPOSE 8081
 
+ENV ACTIVE_PROFILE=dev
 # Run the application
 ENTRYPOINT ["java", "-jar", "app.jar"]
 
