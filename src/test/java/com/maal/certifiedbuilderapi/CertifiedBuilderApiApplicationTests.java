@@ -9,9 +9,10 @@ import org.springframework.test.context.TestPropertySource;
 
 @SpringBootTest
 @TestPropertySource(properties = {
-        "url.service.tech=http://localhost:8080", // Propriedade correta para o Feign
-        "spring.data.mongodb.uri=mongodb://myuser:mypassword@localhost:27017/admin",
-        "spring.cloud.aws.sqs.enabled=false" // Desativa o SQS
+    "url.service.tech=http://localhost:8080",
+    "spring.data.mongodb.uri=mongodb://myuser:mypassword@localhost:27017/admin",
+    "spring.cloud.aws.sqs.enabled=false",
+    "spring.cloud.aws.region.static=us-east-1" // Added to resolve the placeholder
 })
 class CertifiedBuilderApiApplicationTests {
 
