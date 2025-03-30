@@ -8,13 +8,12 @@ import org.springframework.test.context.TestPropertySource;
 
 @SpringBootTest
 @TestPropertySource(properties = {
-        "service.url=http://localhost:8080", // Valor fixo para o Feign
-        "spring.cloud.aws.sqs.enabled=false" // Tenta desativar o SQS
+    "url.service.tech=http://localhost:8080" // Propriedade correta para o Feign
 })
 class CertifiedBuilderApiApplicationTests {
 
     @MockBean
-    private SqsTemplate sqsTemplate; // Mock do SqsTemplate
+    private SqsTemplate sqsTemplate;
 
     @Test
     void contextLoads() {
