@@ -8,7 +8,8 @@ import org.springframework.test.context.TestPropertySource;
 
 @SpringBootTest
 @TestPropertySource(properties = {
-    "url.service.tech=http://localhost:8080" // Propriedade correta para o Feign
+    "url.service.tech=http://localhost:8080", // Propriedade correta para o Feign
+    "spring.data.mongodb.uri=mongodb://myuser:mypassword@localhost:27017/admin"
 })
 class CertifiedBuilderApiApplicationTests {
 
