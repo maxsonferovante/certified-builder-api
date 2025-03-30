@@ -22,6 +22,7 @@ jobs:
           MONGO_INITDB_ROOT_PASSWORD: mypassword
         ports:
           - 27017:27017
+        
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -52,3 +53,4 @@ jobs:
         env:
           MONGO_INITDB_ROOT_USERNAME: myuser
           MONGO_INITDB_ROOT_PASSWORD: mypassword
+          URL_SERVICE_TECH: ${{ secrets.URL_SERVICE_TECH }}
