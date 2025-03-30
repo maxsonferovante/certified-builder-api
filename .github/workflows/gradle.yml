@@ -13,7 +13,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
+    environment: production
     services:
       mongodb:
         image: mongodb/mongodb-community-server:7.0.16-ubuntu2204
