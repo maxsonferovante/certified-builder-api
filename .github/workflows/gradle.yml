@@ -53,3 +53,4 @@ jobs:
           MONGO_INITDB_ROOT_USERNAME: myuser
           MONGO_INITDB_ROOT_PASSWORD: mypassword
           SPRING_URL_SERVICE_TECH: ${{ secrets.URL_SERVICE_TECH }} # Mapeia para a propriedade Spring
+          SPRING_DATA_MONGODB_URI: mongodb://myuser:mypassword@localhost:27017/admin
