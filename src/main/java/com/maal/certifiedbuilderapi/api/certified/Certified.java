@@ -1,13 +1,14 @@
 package com.maal.certifiedbuilderapi.api.certified;
 
-
 import com.maal.certifiedbuilderapi.business.dto.BuildOrdersRequest;
 import com.maal.certifiedbuilderapi.business.dto.BuildOrdersResponse;
+import com.maal.certifiedbuilderapi.business.dto.CertificateStatisticsResponse;
 import com.maal.certifiedbuilderapi.business.dto.DeleteProductResponse;
 import com.maal.certifiedbuilderapi.business.dto.RecoverCertificatesResponse;
-import com.maal.certifiedbuilderapi.business.usecases.CertificateConstructionOrder;
-import com.maal.certifiedbuilderapi.business.usecases.DeleteProduct;
-import com.maal.certifiedbuilderapi.business.usecases.RecoverCertificates;
+import com.maal.certifiedbuilderapi.business.usecase.certificate.CertificateConstructionOrder;
+import com.maal.certifiedbuilderapi.business.usecase.certificate.DeleteProduct;
+import com.maal.certifiedbuilderapi.business.usecase.certificate.GetCertificateStatistics;
+import com.maal.certifiedbuilderapi.business.usecase.certificate.RecoverCertificates;
 import com.maal.certifiedbuilderapi.infrastructure.client.TechFloripa;
 import com.maal.certifiedbuilderapi.infrastructure.client.response.TechOrdersResponse;
 import lombok.RequiredArgsConstructor;
@@ -17,35 +18,38 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/certified")
+@RequestMapping("/api/v1/certified")
 @RequiredArgsConstructor
 public class Certified {
 
-    private final TechFloripa techFloripa;
-    private final CertificateConstructionOrder  certificateConstructionOrder;
-    private final DeleteProduct deleteProduct;
+    private final CertificateConstructionOrder certificateConstructionOrder;
     private final RecoverCertificates recoverCertificates;
+    private final DeleteProduct deleteProduct;
+    private final GetCertificateStatistics getCertificateStatistics;
+    private final TechFloripa techFloripa;
 
-    @GetMapping
-    public List<TechOrdersResponse> getOrders(@RequestParam Integer product_id) {
-        return techFloripa.getOrders(product_id);
+    @GetMapping("/test")
+    public ResponseEntity<List<TechOrdersResponse>> test(@RequestParam Integer productId) {
+        return ResponseEntity.ok(techFloripa.getOrders(productId));
     }
 
-    @GetMapping("/builded")
-    public  ResponseEntity<List<RecoverCertificatesResponse>> getBuildOrders(@RequestParam Integer product_id) {
-        return ResponseEntity.ok(recoverCertificates.execute(product_id));
+    @PostMapping("/build-orders")
+    public ResponseEntity<BuildOrdersResponse> buildOrders(@RequestBody BuildOrdersRequest request) {
+        return ResponseEntity.ok(certificateConstructionOrder.execute(request));
     }
 
-    @PostMapping("/build")
-    public ResponseEntity<BuildOrdersResponse> buildOrders(@RequestBody BuildOrdersRequest buildOrdersRequest) {
-        return ResponseEntity.ok(certificateConstructionOrder.execute(buildOrdersRequest));
+    @GetMapping("/recover-certificates")
+    public ResponseEntity<List<RecoverCertificatesResponse>> recoverCertificates(@RequestParam Integer productId) {
+        return ResponseEntity.ok(recoverCertificates.execute(productId));
     }
 
-
-    @DeleteMapping("/delete/product")
-    public ResponseEntity<DeleteProductResponse> deleteOrders(@RequestParam Integer product_id) {
-        return  ResponseEntity.ok(deleteProduct.execute(product_id));
+    @DeleteMapping("/product")
+    public ResponseEntity<DeleteProductResponse> deleteProduct(@RequestParam Integer productId) {
+        return ResponseEntity.ok(deleteProduct.execute(productId));
     }
 
-
+    @GetMapping("/statistics")
+    public ResponseEntity<CertificateStatisticsResponse> getCertificateStatistics(@RequestParam Integer productId) {
+        return ResponseEntity.ok(getCertificateStatistics.execute(productId));
+    }
 }
