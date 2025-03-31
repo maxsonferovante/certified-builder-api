@@ -9,6 +9,8 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
+import java.time.LocalDateTime;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -20,6 +22,8 @@ public class CertificateEntity {
     private String id;
     private Boolean success;
     private String certificateKey;
+    private String certificateUrl;
+    LocalDateTime generetedDate;
 
     @Field("order")
     private OrderEntity order;
