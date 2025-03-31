@@ -8,7 +8,9 @@ import java.util.List;
 import java.util.Optional;
 
 public interface CertificateRepository extends MongoRepository<CertificateEntity, String> {
+    Optional<CertificateEntity>  findByOrderAndSuccessTrue(OrderEntity order);
     Optional<CertificateEntity> findByOrder(OrderEntity order);
     void deleteByOrder_Product_ProductId(Integer productId);
     List<CertificateEntity> findByOrder_Product_ProductId(Integer productId);
+
 }

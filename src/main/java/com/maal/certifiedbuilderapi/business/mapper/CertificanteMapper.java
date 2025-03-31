@@ -18,7 +18,8 @@ public interface CertificanteMapper {
             return RecoverCertificatesResponse
                     .builder()
                     .certificateId(certificateEntity.getId())
-                    .certificateUrl(certificateEntity.getCertificateKey())
+                    .certificateUrl(certificateEntity.getCertificateUrl())
+                    .generetedDate(certificateEntity.getGeneretedDate())
                     .success(certificateEntity.getSuccess())
                     .productId(Objects.requireNonNull(orderEntity).getProduct().getProductId())
                     .productName(Objects.requireNonNull(orderEntity).getProduct().getProductName())

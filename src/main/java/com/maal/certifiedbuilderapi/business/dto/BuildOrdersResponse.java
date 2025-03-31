@@ -11,8 +11,6 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class BuildOrdersResponse {
-    private Integer productId;
-    private String productName;
     private Integer certificateQuantity;
     private List<Integer> existingOrders;
     private List<Integer> newOrders;
