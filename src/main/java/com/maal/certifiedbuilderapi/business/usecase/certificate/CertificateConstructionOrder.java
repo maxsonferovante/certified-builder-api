@@ -80,9 +80,11 @@ public class CertificateConstructionOrder {
     private void processOrders(List<TechOrdersResponse> orders,
                              List<Integer> existingOrders, List<TechOrdersResponse> newOrders) {
         for (TechOrdersResponse order : orders) {
-            ProductEntity product = getOrCreateProduct(order);
-            ParticipantEntity participant = getOrCreateParticipant(order);
-            processOrder(order, product, participant, existingOrders, newOrders);
+            if (!order.getTimeCheckin().isEmpty()) {
+                ProductEntity product = getOrCreateProduct(order);
+                ParticipantEntity participant = getOrCreateParticipant(order);
+                processOrder(order, product, participant, existingOrders, newOrders);
+            }
         }
     }
 
