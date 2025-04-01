@@ -84,83 +84,124 @@ A API está disponível na porta 8081.
 
 ### Base URL
 ```
-http://localhost:8081/certified
+http://localhost:8081/api/v1/certified
 ```
 
 ### Endpoints Disponíveis
 
-#### 1. Listar Pedidos
+#### 1. Criar Ordem de Construção de Certificados
 ```http
-GET /certified?product_id={product_id}
+POST /certified/build-orders
 ```
 
-**Descrição**: Retorna a lista de pedidos para um produto específico.
+**Descrição**: Inicia o processo de construção de certificados para um produto específico.
 
-**Parâmetros**:
-- `product_id` (query): ID do produto
-
-**Resposta**: Lista de `TechOrdersResponse`
-
-#### 2. Listar Pedidos Construídos
-```http
-GET /certified/builded?product_id={product_id}
-```
-
-**Descrição**: Retorna a lista de pedidos já construídos para um produto específico.
-
-**Parâmetros**:
-- `product_id` (query): ID do produto
-
-**Resposta**: Lista de `RecoverCertificatesResponse`
-
-#### 3. Construir Pedidos
-```http
-POST /certified/build
-```
-
-**Descrição**: Inicia o processo de construção de pedidos.
+**Headers**:
+- `Content-Type: application/json`
+- `X-API-KEY: {api_key}`
 
 **Corpo da Requisição**:
 ```json
 {
-    // BuildOrdersRequest
+    "productId": "316"
 }
 ```
 
-**Resposta**: `BuildOrdersResponse`
-
-#### 4. Deletar Produto
-```http
-DELETE /certified/delete/product?product_id={product_id}
+**Resposta**:
+```json
+{
+    "certificateQuantity": 2,
+    "existingOrders": [],
+    "newOrders": [452, 317]
+}
 ```
 
-**Descrição**: Remove um produto e seus pedidos associados.
+#### 2. Monitorar Progresso
+```http
+GET /certified/statistics?productId={product_id}
+```
+
+**Descrição**: Retorna estatísticas sobre o progresso da geração de certificados.
+
+**Headers**:
+- `X-API-KEY: {api_key}`
 
 **Parâmetros**:
-- `product_id` (query): ID do produto a ser deletado
+- `product_id` (query): ID do produto
 
-**Resposta**: `DeleteProductResponse`
+**Resposta**:
+```json
+{
+    "productId": 316,
+    "productName": "Evento de Teste",
+    "totalCertificates": 2,
+    "successfulCertificates": 2,
+    "failedCertificates": 0,
+    "pendingCertificates": 0
+}
+```
+
+#### 3. Recuperar Certificados
+```http
+GET /certified/recover-certificates?productId={product_id}
+```
+
+**Descrição**: Retorna a lista de certificados gerados para um produto específico.
+
+**Headers**:
+- `X-API-KEY: {api_key}`
+
+**Parâmetros**:
+- `product_id` (query): ID do produto
+
+**Resposta**:
+```json
+[
+    {
+        "success": true,
+        "certificateId": "67ec239c960dac7f218f4427",
+        "certificateUrl": "https://example-bucket.s3.amazonaws.com/certificates/316/452/certificate.png",
+        "generetedDate": "2025-04-01T17:34:20.748",
+        "productId": 316,
+        "productName": "Evento de Teste",
+        "orderId": 452,
+        "orderDate": "2025-03-26T20:55:25"
+    }
+]
+```
 
 ### Exemplos de Uso
 
-#### Listar Pedidos
+#### Criar Ordem de Certificados
 ```bash
-curl -X GET "http://localhost:8081/certified?product_id=123"
+curl --request POST \
+  --url 'http://localhost:8081/api/v1/certified/build-orders' \
+  --header 'Content-Type: application/json' \
+  --header 'X-API-KEY: example-api-key-123' \
+  --data '{
+    "productId": "316"
+  }'
 ```
 
-#### Construir Pedidos
+#### Monitorar Progresso
 ```bash
-curl -X POST "http://localhost:8081/certified/build" \
-     -H "Content-Type: application/json" \
-     -d '{
-           // BuildOrdersRequest payload
-         }'
+curl --request GET \
+  --url 'http://localhost:8081/api/v1/certified/statistics?productId=316' \
+  --header 'X-API-KEY: example-api-key-123'
 ```
 
-#### Deletar Produto
+#### Recuperar Certificados
 ```bash
-curl -X DELETE "http://localhost:8081/certified/delete/product?product_id=123"
+curl --request GET \
+  --url 'http://localhost:8081/api/v1/certified/recover-certificates?productId=316' \
+  --header 'X-API-KEY: example-api-key-123'
 ```
+
+### Notas Importantes
+
+- Todos os endpoints requerem autenticação via API Key no header `X-API-KEY`
+- Recomenda-se implementar polling no endpoint de estatísticas até que `successfulCertificates` seja igual a `totalCertificates`
+- As URLs dos certificados são temporárias e expiram após 24 horas
 
 ## Contribuindo
 
