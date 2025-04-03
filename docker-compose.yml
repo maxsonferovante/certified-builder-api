@@ -27,6 +27,7 @@ services:
     user: root
     container_name: "localstack_main"
     image: localstack/localstack
+    entrypoint: ["/bin/sh", "-c", "chmod +x /etc/localstack/init/ready.d/init-aws.sh && exec localstack start"]
     ports:
       - "127.0.0.1:4566:4566"            # LocalStack Gateway
       - "127.0.0.1:4510-4559:4510-4559"  # external services port range
