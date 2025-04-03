@@ -8,11 +8,11 @@
 # database or a cache. For examples, see the Awesome Compose repository:
 # https://github.com/docker/awesome-compose
 services:
-  server:
-    build:
-      context: .
-    ports:
-      - 8081:8081
+#  server:
+#    build:
+#      context: .
+#    ports:
+#      - 8081:8081
   mongodb:
     container_name: mongodb-certified-builder-api
     image: mongodb/mongodb-community-server:7.0.16-ubuntu2204
@@ -21,3 +21,23 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: myuser
       MONGO_INITDB_ROOT_PASSWORD: mypassword
+
+
+  localstack:
+    user: root
+    container_name: "localstack_main"
+    image: localstack/localstack
+    command: ["/bin/sh", "-c", "chmod +x /etc/localstack/init/ready.d/init-aws.sh && exec localstack start"]
+    ports:
+      - "127.0.0.1:4566:4566"            # LocalStack Gateway
+      - "127.0.0.1:4510-4559:4510-4559"  # external services port range
+    environment:
+      # LocalStack configuration: https://docs.localstack.cloud/references/configuration/
+      - DEBUG=${DEBUG:-0}
+      - SERVICES=s3,sqs
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+    volumes:
+      - "${PWD}/init-aws.sh:/etc/localstack/init/ready.d/init-aws.sh:ro"
+      - "${maal:-./volume}:/var/lib/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
