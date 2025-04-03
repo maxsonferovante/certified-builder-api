@@ -1,56 +1,103 @@
-# name: PR Workflow
+name: Fluxo de Pull Request
 
-# on:
-#   pull_request:
-#     branches:
-#       - master
-#     types:
-#       - opened
-#       - synchronize
-#       - reopened
-#   workflow_dispatch:  # Permite execução manual do workflow
+on:
+  pull_request:
+    branches:
+      - master
+    types:
+      - opened
+      - synchronize
+      - reopened
+  workflow_dispatch:  # Permite execução manual do workflow
 
-# jobs:
-#   build:
-#     runs-on: ubuntu-latest
-#     environment: production
-#     services:
-#       mongodb:
-#         image: mongodb/mongodb-community-server:7.0.16-ubuntu2204
-#         env:
-#           MONGO_INITDB_ROOT_USERNAME: myuser
-#           MONGO_INITDB_ROOT_PASSWORD: mypassword
-#         ports:
-#           - 27017:27017
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment: production
+    services:
+      mongodb:
+        image: mongodb/mongodb-community-server:7.0.16-ubuntu2204
+        env:
+          MONGO_INITDB_ROOT_USERNAME: myuser
+          MONGO_INITDB_ROOT_PASSWORD: mypassword
+        ports:
+          - 27017:27017
+      
+      localstack:
+        image: localstack/localstack
+        ports:
+          - 4566:4566
+        env:
+          SERVICES: s3,sqs
+          DEBUG: 1
+          AWS_DEFAULT_REGION: us-east-1
+          AWS_ACCESS_KEY_ID: test
+          AWS_SECRET_ACCESS_KEY: test
+          DATA_DIR: /tmp/localstack/data
   
-#     steps:
-#       - name: Checkout repository
-#         uses: actions/checkout@v4
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-#       - name: Set up JDK 23
-#         uses: actions/setup-java@v3
-#         with:
-#           distribution: 'temurin'
-#           java-version: '23'
+      - name: Set up JDK 23
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '23'
 
-#       - name: Cache Gradle packages
-#         uses: actions/cache@v4
-#         with:
-#           path: ~/.gradle/caches
-#           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-#           restore-keys: |
-#             ${{ runner.os }}-gradle-
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
 
-#       - name: Grant execute permission for gradlew
-#         run: chmod +x gradlew
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
 
-#       - name: Clean Build Cache
-#         run: ./gradlew clean build --refresh-dependencies
+      - name: Wait for LocalStack to be ready
+        run: |
+          while ! curl -s http://localhost:4566/_localstack/health | grep -q '"sqs": "running"'; do
+            echo "Waiting for LocalStack to be ready..."
+            sleep 2
+          done
 
-#       - name: Build with Gradle
-#         run: ./gradlew build
-#         env:
-#           MONGO_INITDB_ROOT_USERNAME: myuser
-#           MONGO_INITDB_ROOT_PASSWORD: mypassword
-#           SPRING_URL_SERVICE_TECH: ${{ secrets.URL_SERVICE_TECH }} # Mapeia para a propriedade Spring
-#           SPRING_DATA_MONGODB_URI: mongodb://myuser:mypassword@localhost:27017/admin
+      - name: Configure AWS services
+        run: |
+          # Instalar awslocal
+          pip install awscli-local
+          
+          # Criar filas SQS
+          awslocal sqs create-queue --queue-name builder.fifo --attributes FifoQueue=true
+          awslocal sqs create-queue --queue-name notification_generation.fifo --attributes FifoQueue=true
+          
+          # Criar bucket S3
+          awslocal s3api create-bucket --bucket maal-upload-dev
+
+      - name: Clean Build Cache
+        run: ./gradlew clean build --refresh-dependencies
+
+      - name: Build with Gradle
+        run: ./gradlew build
+        env:
+          MONGO_INITDB_ROOT_USERNAME: myuser
+          MONGO_INITDB_ROOT_PASSWORD: mypassword
+          SPRING_URL_SERVICE_TECH: ${{ secrets.URL_SERVICE_TECH }}
+          SPRING_DATA_MONGODB_URI: mongodb://myuser:mypassword@localhost:27017/admin
+          
+          # AWS LocalStack Configuration
+          SPRING_CLOUD_AWS_ENDPOINT: http://localhost:4566
+          SPRING_CLOUD_AWS_CREDENTIALS_ACCESSKEY: test
+          SPRING_CLOUD_AWS_CREDENTIALS_SECRETKEY: test
+          SPRING_CLOUD_AWS_REGION_STATIC: us-east-1
+          SPRING_CLOUD_AWS_REGION_AUTO: false
+          
+          # SQS Configuration
+          SPRING_CLOUD_AWS_QUEUE_NAME_NOTIFICATION_GENERATION: notification_generation.fifo
+          SPRING_CLOUD_AWS_SQS_QUEUE_NAME: builder.fifo
+          
+          # S3 Configuration
+          SPRING_CLOUD_AWS_S3_BUCKET_NAME: maal-upload-dev
+          SPRING_CLOUD_AWS_S3_ENDPOINT: http://localhost:4566
+          SPRING_CLOUD_AWS_S3_PATH_STYLE_ACCESS: true
