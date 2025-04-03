@@ -13,6 +13,7 @@ API desenvolvida em Spring Boot para gerenciamento de builders certificados, int
 - MongoDB
 - Gradle
 - Docker
+- LocalStack (para ambiente de desenvolvimento)
 
 ## Funcionalidades
 
@@ -28,25 +29,47 @@ API desenvolvida em Spring Boot para gerenciamento de builders certificados, int
 - Docker (opcional)
 - Credenciais AWS configuradas
 - MongoDB
+- LocalStack (para ambiente de desenvolvimento)
 
 ## Configuração
 
 ### Variáveis de Ambiente
 
-Configure as seguintes variáveis de ambiente:
-
+#### Ambiente de Desenvolvimento (LocalStack)
 ```bash
 # AWS Credentials
-AWS_ACCESS_KEY_ID=your_access_key
-AWS_SECRET_ACCESS_KEY=your_secret_key
+AWS_ACCESS_KEY=your_access_key
+AWS_SECRET_KEY=your_secret_key
 AWS_REGION=your_region
 
-# MongoDB
-MONGODB_URI=your_mongodb_uri
+# Queue Names
+QUEUE_NAME_NOTIFICATION_GENERATION=your_notification_queue.fifo
+QUEUE_NAME_BUILDER=your_builder_queue.fifo
 
-# API Security
+# S3
+S3_BUCKET_NAME=your_bucket_name
+
+# Other Configurations
+MONGODB_URI=your_mongodb_uri
+URL_SERVICE_TECH=your_tech_service_url
 API_KEY=your_api_key
 ```
+
+
+### Configuração do LocalStack
+
+O projeto utiliza o LocalStack para simular os serviços AWS em ambiente de desenvolvimento. Para configurar:
+
+1. Instale o Docker e Docker Compose
+2. Execute o comando para iniciar os serviços:
+```bash
+docker-compose up -d
+```
+
+O LocalStack irá:
+- Criar as filas SQS necessárias
+- Criar o bucket S3
+- Configurar os endpoints locais para os serviços AWS
 
 ### AWS Services
 
@@ -56,16 +79,30 @@ A API utiliza os seguintes serviços AWS:
 
 ## Executando a Aplicação
 
-### Localmente
+### Localmente (com LocalStack)
 
 ```bash
-./gradlew bootRun
+# Iniciar LocalStack
+docker-compose up -d
+
+# Executar a aplicação
+./gradlew bootRun -Dspring.profiles.active=dev
+```
+
+### Em Produção
+
+```bash
+# Executar a aplicação
+./gradlew bootRun -Dspring.profiles.active=prod
 ```
 
 ### Com Docker
 
 ```bash
+# Construir a imagem
 docker build -t certified-builder-api .
+
+# Executar o container
 docker run -p 8081:8081 certified-builder-api
 ```
 
@@ -77,6 +114,11 @@ docker run -p 8081:8081 certified-builder-api
 ### AWS Services
 - SQS: [Documentação Spring Cloud AWS SQS](https://www.baeldung.com/java-spring-cloud-aws-v3-intro)
 - S3: [Documentação Spring Cloud AWS S3](https://docs.awspring.io/spring-cloud-aws/docs/3.3.0/reference/html/index.html#spring-cloud-aws-s3)
+
+### LocalStack
+- [Documentação Oficial do LocalStack](https://docs.localstack.cloud/user-guide/)
+- [Guia de Serviços AWS Suportados](https://docs.localstack.cloud/user-guide/aws/feature-coverage/)
+- [Configuração de Integração com Spring Boot](https://docs.localstack.cloud/user-guide/integrations/spring-boot/)
 
 ## Endpoints
 
@@ -103,16 +145,7 @@ POST /certified/build-orders
 **Corpo da Requisição**:
 ```json
 {
-    "productId": "316"
-}
-```
-
-**Resposta**:
-```json
-{
-    "certificateQuantity": 2,
-    "existingOrders": [],
-    "newOrders": [452, 317]
+    "productId": 123
 }
 ```
 
