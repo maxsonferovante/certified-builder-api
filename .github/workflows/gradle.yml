@@ -58,7 +58,7 @@ jobs:
 
       - name: Wait for LocalStack to be ready
         run: |
-          while ! curl -s http://localhost:4566/_localstack/health | grep -q '"sqs": "running"'; do
+          while ! curl -s http://localhost:4566/_localstack/health | grep -q '"sqs": "available"'; do
             echo "Waiting for LocalStack to be ready..."
             sleep 2
           done
