@@ -2,6 +2,7 @@ name: Gerenciamento de Tags e Releases
 
 on:
   push:
+  pull_request:
     branches:
       - main
   workflow_dispatch:  # Permite execução manual do workflow
