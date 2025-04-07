@@ -59,15 +59,7 @@ A API centraliza a criação de ordens de geração de certificados, delega o pr
    - Envia uma mensagem de retorno para a **fila SQS de notificações**, sinalizando o status (sucesso ou falha).
 5. A API, que consome essa fila, atualiza o progresso e armazena os metadados no MongoDB.
 6. O cliente pode consultar o progresso e os certificados gerados pelos endpoints `/statistics` e `/recover-certificates`.
-   
-## Funcionalidades
-
-- Autenticação via API Key
-- Integração com Amazon SQS para processamento assíncrono
-- Armazenamento de arquivos no Amazon S3
-- Persistência de dados com MongoDB
-- API RESTful
-
+ 
 ## Pré-requisitos
 
 - JDK 24
