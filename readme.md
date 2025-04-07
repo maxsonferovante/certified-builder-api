@@ -2,7 +2,10 @@
 
 [![Fluxo de Pull Request](https://github.com/maxsonferovante/certified-builder-api/actions/workflows/gradle.yml/badge.svg)](https://github.com/maxsonferovante/certified-builder-api/actions/workflows/gradle.yml)  
 [![Gerenciamento de Tags e Releases](https://github.com/maxsonferovante/certified-builder-api/actions/workflows/release.yml/badge.svg)](https://github.com/maxsonferovante/certified-builder-api/actions/workflows/release.yml)
-API desenvolvida em Spring Boot para gerenciamento de builders certificados, integrando com serviços AWS como SQS e S3.
+
+Certified Builder API é uma aplicação desenvolvida com Spring Boot para gerenciar e coordenar a geração de certificados digitais personalizados para eventos e usuários. O projeto utiliza uma arquitetura orientada a eventos com processamento assíncrono via Amazon SQS e funções AWS Lambda.
+
+A API centraliza a criação de ordens de geração de certificados, delega o processamento a uma Lambda via fila SQS e acompanha o progresso por meio de eventos de retorno também enviados por outra fila SQS. Os certificados gerados são armazenados no Amazon S3, com URLs temporárias de acesso retornadas aos usuários.
 
 ## Tecnologias Utilizadas
 
@@ -15,6 +18,48 @@ API desenvolvida em Spring Boot para gerenciamento de builders certificados, int
 - Docker
 - LocalStack (para ambiente de desenvolvimento)
 
+
+## Visão Geral da Arquitetura
+
+```text
+[Client] --> [Certified Builder API]
+                |
+                v
+        [SQS: build-order.fifo]
+                |
+                v
+        [AWS Lambda: Cert Generator]
+                |
+                v
+     Geração de certificados + Upload no S3
+                |
+                v
+       [SQS: notification.fifo (callback)]
+                |
+                v
+        [Certified Builder API] <-- Atualiza progresso e responde cliente
+```
+
+## Principais Funcionalidades
+
+- **Criação de ordens de certificados** para produtos ou eventos
+- **Processamento assíncrono** via Amazon SQS e AWS Lambda
+- **Armazenamento de certificados** no Amazon S3
+- **Monitoramento de progresso** da geração
+- **Recuperação de certificados gerados**
+- **Autenticação via API Key**
+
+## Fluxo Detalhado
+
+1. O cliente chama o endpoint `/certified/build-orders`, informando o `productId`.
+2. A API envia uma mensagem para a **fila SQS de build orders**.
+3. Uma **AWS Lambda** é acionada automaticamente, processa a ordem e gera os certificados.
+4. Ao concluir a tarefa, a Lambda:
+   - Armazena os certificados no S3.
+   - Envia uma mensagem de retorno para a **fila SQS de notificações**, sinalizando o status (sucesso ou falha).
+5. A API, que consome essa fila, atualiza o progresso e armazena os metadados no MongoDB.
+6. O cliente pode consultar o progresso e os certificados gerados pelos endpoints `/statistics` e `/recover-certificates`.
+   
 ## Funcionalidades
 
 - Autenticação via API Key
