@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: certified-builder-api
+    restart: unless-stopped
+    environment:
+      - SPRING_DATA_MONGODB_URI=mongodb://admin:secure_password@mongodb:27017/certified-builder
+      - SPRING_PROFILES_ACTIVE=prod
+    depends_on:
+      - mongodb
+    networks:
+      - app-network
+
+  mongodb:
+    container_name: mongodb-certified-builder-prod
+    image: mongodb/mongodb-community-server:7.0.16-ubuntu2204
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: secure_password
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - app-network
+
+  nginx:
+    container_name: nginx-certified-builder
+    image: nginx:alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/ssl:/etc/nginx/ssl
+    depends_on:
+      - app
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mongodb_data: 
