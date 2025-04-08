@@ -34,6 +34,30 @@ public class CertificateConstructionOrder {
     private final ProductRepository productRepository;
     private final OrderEventPublisher orderEventPublisher;
 
+
+    /**
+     * Processes orders from TechFloripa and creates certificates for new orders.
+     *
+     * @param orders The list of TechOrdersResponse containing the product ID
+     * @return BuildOrdersResponse with processing results
+     */
+    public BuildOrdersResponse execute(List<TechOrdersResponse> orders) {
+
+        List<Integer> existingOrders = new ArrayList<>();
+        List<TechOrdersResponse> newOrders = new ArrayList<>();
+
+        if (CollectionUtils.isEmpty(orders)) {
+            return BuildOrdersResponse.builder()
+                    .certificateQuantity(0)
+                    .existingOrders(List.of())
+                    .newOrders(List.of())
+                    .build();
+        }
+        processOrders(orders, existingOrders, newOrders);
+        publishNewOrders(newOrders);
+
+        return buildResponse(existingOrders, newOrders);
+    }
     /**
      * Processes orders from TechFloripa and creates certificates for new orders.
      *

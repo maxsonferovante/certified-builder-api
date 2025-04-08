@@ -16,4 +16,6 @@ public class CertificateStatisticsResponse {
     private Integer successfulCertificates;
     private Integer failedCertificates;
     private Integer pendingCertificates;
-} 
+}
+
+

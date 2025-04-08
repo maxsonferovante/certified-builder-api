@@ -168,7 +168,70 @@ http://localhost:8081/api/v1/certified
 
 ### Endpoints Disponíveis
 
-#### 1. Criar Ordem de Construção de Certificados
+#### 1. Criar Ordem de Certificado Individual
+```http
+POST /certified/build-order
+```
+
+**Descrição**: Inicia o processo de construção de certificados para uma ou mais pessoas específicas.
+
+**Headers**:
+- `Content-Type: application/json`
+- `X-API-KEY: {api_key}`
+
+**Corpo da Requisição**:
+```json
+[
+    {
+        "order_id": 1001,
+        "first_name": "John",
+        "last_name": "Doe",
+        "email": "john.doe@example.com",
+        "phone": "(11) 99999-9999",
+        "cpf": "123.456.789-00",
+        "city": "São Paulo",
+        "product_id": 500,
+        "product_name": "Tech Conference 2024",
+        "certificate_details": "In recognition of their participation in the 10th edition of the Tech Conference, held on March 15, 2024, in São Paulo, Brazil.",
+        "certificate_logo": "https://example.com/images/logo.png",
+        "certificate_background": "https://example.com/images/background.png",
+        "order_date": "2024-03-15 14:30:00",
+        "checkin_latitude": "-23.550520",
+        "checkin_longitude": "-46.633308",
+        "time_checkin": "2024-03-15 14:35:00"
+    }
+]
+```
+
+**Exemplo de Uso**:
+```bash
+curl --request POST \
+  --url http://localhost:8081/api/v1/certified/build-order \
+  --header 'Content-Type: application/json' \
+  --header 'X-API-KEY: {api_key}' \
+  --data '[
+    {
+        "order_id": 1001,
+        "first_name": "John",
+        "last_name": "Doe",
+        "email": "john.doe@example.com",
+        "phone": "(11) 99999-9999",
+        "cpf": "123.456.789-00",
+        "city": "São Paulo",
+        "product_id": 500,
+        "product_name": "Tech Conference 2024",
+        "certificate_details": "In recognition of their participation in the 10th edition of the Tech Conference, held on March 15, 2024, in São Paulo, Brazil.",
+        "certificate_logo": "https://example.com/images/logo.png",
+        "certificate_background": "https://example.com/images/background.png",
+        "order_date": "2024-03-15 14:30:00",
+        "checkin_latitude": "-23.550520",
+        "checkin_longitude": "-46.633308",
+        "time_checkin": "2024-03-15 14:35:00"
+    }
+]'
+```
+
+#### 2. Criar Ordem de Construção de Certificados
 ```http
 POST /certified/build-orders
 ```
@@ -182,11 +245,11 @@ POST /certified/build-orders
 **Corpo da Requisição**:
 ```json
 {
-    "productId": 123
+    "productId": 500
 }
 ```
 
-#### 2. Monitorar Progresso
+#### 3. Monitorar Progresso
 ```http
 GET /certified/statistics?productId={product_id}
 ```
@@ -202,16 +265,16 @@ GET /certified/statistics?productId={product_id}
 **Resposta**:
 ```json
 {
-    "productId": 316,
-    "productName": "Evento de Teste",
-    "totalCertificates": 2,
-    "successfulCertificates": 2,
-    "failedCertificates": 0,
-    "pendingCertificates": 0
+    "productId": 500,
+    "productName": "Tech Conference 2024",
+    "totalCertificates": 150,
+    "successfulCertificates": 145,
+    "failedCertificates": 3,
+    "pendingCertificates": 2
 }
 ```
 
-#### 3. Recuperar Certificados
+#### 4. Recuperar Certificados
 ```http
 GET /certified/recover-certificates?productId={product_id}
 ```
@@ -229,13 +292,13 @@ GET /certified/recover-certificates?productId={product_id}
 [
     {
         "success": true,
-        "certificateId": "67ec239c960dac7f218f4427",
-        "certificateUrl": "https://example-bucket.s3.amazonaws.com/certificates/316/452/certificate.png",
-        "generetedDate": "2025-04-01T17:34:20.748",
-        "productId": 316,
-        "productName": "Evento de Teste",
-        "orderId": 452,
-        "orderDate": "2025-03-26T20:55:25"
+        "certificateId": "abc123def456",
+        "certificateUrl": "https://example-bucket.s3.amazonaws.com/certificates/500/1001/certificate.png",
+        "generetedDate": "2024-03-15T15:30:00.000",
+        "productId": 500,
+        "productName": "Tech Conference 2024",
+        "orderId": 1001,
+        "orderDate": "2024-03-15T14:30:00"
     }
 ]
 ```
@@ -249,21 +312,21 @@ curl --request POST \
   --header 'Content-Type: application/json' \
   --header 'X-API-KEY: example-api-key-123' \
   --data '{
-    "productId": "316"
+    "productId": "500"
   }'
 ```
 
 #### Monitorar Progresso
 ```bash
 curl --request GET \
-  --url 'http://localhost:8081/api/v1/certified/statistics?productId=316' \
+  --url 'http://localhost:8081/api/v1/certified/statistics?productId=500' \
   --header 'X-API-KEY: example-api-key-123'
 ```
 
 #### Recuperar Certificados
 ```bash
 curl --request GET \
-  --url 'http://localhost:8081/api/v1/certified/recover-certificates?productId=316' \
+  --url 'http://localhost:8081/api/v1/certified/recover-certificates?productId=500' \
   --header 'X-API-KEY: example-api-key-123'
 ```
 
