@@ -7,6 +7,9 @@ mkdir -p ./letsencrypt
 touch ./letsencrypt/acme.json
 chmod 600 ./letsencrypt/acme.json
 
+echo "📁 Criando diretórios para Nginx..."
+mkdir -p ./nginx/conf.d
+
 echo "🌍 Exportando variáveis de ambiente..."
 export MONGO_URI="${MONGO_URI}"
 export MONGO_INITDB_ROOT_USERNAME="${MONGO_INITDB_ROOT_USERNAME}"
@@ -21,4 +24,7 @@ export QUEUE_NAME_BUILDER="${QUEUE_NAME_BUILDER}"
 export S3_BUCKET_NAME="${S3_BUCKET_NAME}"
 
 echo "🚀 Subindo containers com Docker Compose..."
+docker compose -f docker-compose.prod.yml down
 docker compose -f docker-compose.prod.yml up -d --build
+
+echo "✅ Deploy concluído com sucesso!"
