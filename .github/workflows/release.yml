@@ -1,4 +1,4 @@
-name: Gerenciamento de Tags e Releases
+name: Gerenciamento de Tags, Releases e Deploy
 
 on:
   push:
