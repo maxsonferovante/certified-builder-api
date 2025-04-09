@@ -13,6 +13,7 @@ permissions:
 jobs:
   create-release:
     runs-on: ubuntu-latest
+    environment: production
     steps:
       - name: Checkout do repositório
         uses: actions/checkout@v4
@@ -65,3 +66,35 @@ jobs:
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+
+      - name: Criar chave SSH
+        run: |
+          echo "${{ secrets.EC2_KEY }}" > ec2_key.pem
+          chmod 600 ec2_key.pem
+      - name: Deploy via SSH na EC2
+        run: |
+          ssh -o StrictHostKeyChecking=no -i ec2_key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            # Entrar na pasta do app
+            cd ~/certified-builder-api
+
+            # Fazer pull do repositório
+            git pull origin main
+
+             # Puxar última versão do repositório
+            git pull origin main
+
+            # Passar variáveis diretamente no comando docker
+            MONGO_URI=${{ secrets.MONGO_URI }} \
+            URL_SERVICE_TECH=${{ secrets.URL_SERVICE_TECH }} \
+            API_KEY=${{ secrets.API_KEY }} \
+            AWS_ACCESS_KEY=${{ secrets.AWS_ACCESS_KEY }} \
+            AWS_SECRET_KEY=${{ secrets.AWS_SECRET_KEY }} \
+            AWS_REGION=${{ secrets.AWS_REGION }} \
+            QUEUE_NAME_NOTIFICATION_GENERATION=${{ secrets.QUEUE_NAME_NOTIFICATION_GENERATION }} \
+            QUEUE_NAME_BUILDER=${{ secrets.QUEUE_NAME_BUILDER }} \
+            S3_BUCKET_NAME=${{ secrets.S3_BUCKET_NAME }} \
+            MONGO_INITDB_ROOT_USERNAME=${{ secrets.MONGO_INITDB_ROOT_USERNAME }} \
+            MONGO_INITDB_ROOT_PASSWORD=${{ secrets.MONGO_INITDB_ROOT_PASSWORD }} \
+            # Subir containers
+            docker compose -f docker-compose.prod.yml up -d --build
+          EOF

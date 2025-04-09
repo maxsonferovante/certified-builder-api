@@ -6,8 +6,16 @@ services:
     container_name: certified-builder-api
     restart: unless-stopped
     environment:
-      - SPRING_DATA_MONGODB_URI=mongodb://admin:secure_password@mongodb:27017/certified-builder
+      - SPRING_DATA_MONGODB_URI=${MONGO_URI}
       - SPRING_PROFILES_ACTIVE=prod
+      - URL_SERVICE_TECH=${URL_SERVICE_TECH}
+      - API_KEY=${API_KEY}
+      - AWS_ACCESS_KEY=${AWS_ACCESS_KEY}
+      - AWS_SECRET_KEY=${AWS_SECRET_KEY}
+      - AWS_REGION=${AWS_REGION}
+      - QUEUE_NAME_NOTIFICATION_GENERATION=${QUEUE_NAME_NOTIFICATION_GENERATION}
+      - QUEUE_NAME_BUILDER=${QUEUE_NAME_BUILDER}
+      - S3_BUCKET_NAME=${S3_BUCKET_NAME}
     depends_on:
       - mongodb
     networks:
@@ -18,8 +26,8 @@ services:
     image: mongodb/mongodb-community-server:7.0.16-ubuntu2204
     restart: unless-stopped
     environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: secure_password
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
     volumes:
       - mongodb_data:/data/db
     networks:
