@@ -1,10 +1,30 @@
+version: "3.9"
+
 services:
+  traefik:
+    image: "traefik:v3.2"
+    container_name: "traefik"
+    command:
+      - "--configfile=/etc/traefik/traefik.yml"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - "./letsencrypt:/letsencrypt"
+      - "./traefik.yml:/etc/traefik/traefik.yml:ro"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    networks:
+      - app-network
+
   app:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: certified-builder-api
     restart: unless-stopped
+    ports:
+      - "8081" # expõe internamente para Traefik
     environment:
       - SPRING_DATA_MONGODB_URI=${MONGO_URI}
       - SPRING_PROFILES_ACTIVE=prod
@@ -16,6 +36,15 @@ services:
       - QUEUE_NAME_NOTIFICATION_GENERATION=${QUEUE_NAME_NOTIFICATION_GENERATION}
       - QUEUE_NAME_BUILDER=${QUEUE_NAME_BUILDER}
       - S3_BUCKET_NAME=${S3_BUCKET_NAME}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.api.rule=PathPrefix(`/api`)"
+      - "traefik.http.middlewares.api-strip.stripprefix.prefixes=/api"
+      - "traefik.http.middlewares.api-strip.stripprefix.forceslash=false"
+      - "traefik.http.routers.api.middlewares=api-strip@docker"
+      - "traefik.http.routers.api.entrypoints=websecure"
+      - "traefik.http.routers.api.tls.certresolver=myresolver"
+      - "traefik.http.services.api.loadbalancer.server.port=8081"
     depends_on:
       - mongodb
     networks:
@@ -26,25 +55,10 @@ services:
     image: mongodb/mongodb-community-server:7.0.16-ubuntu2204
     restart: unless-stopped
     environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
     volumes:
       - mongodb_data:/data/db
-    networks:
-      - app-network
-
-  nginx:
-    container_name: nginx-certified-builder
-    image: nginx:alpine
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/conf.d:/etc/nginx/conf.d
-      - ./nginx/ssl:/etc/nginx/ssl
-    depends_on:
-      - app
     networks:
       - app-network
 
@@ -53,4 +67,4 @@ networks:
     driver: bridge
 
 volumes:
-  mongodb_data: 
+  mongodb_data:
