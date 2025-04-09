@@ -86,17 +86,17 @@ jobs:
             chmod 600 ./letsencrypt/acme.json
 
             # Passar variáveis diretamente no comando docker
-            MONGO_URI=${{ secrets.MONGO_URI }} \
-            URL_SERVICE_TECH=${{ secrets.URL_SERVICE_TECH }} \
-            API_KEY=${{ secrets.API_KEY }} \
-            AWS_ACCESS_KEY=${{ secrets.AWS_ACCESS_KEY }} \
-            AWS_SECRET_KEY=${{ secrets.AWS_SECRET_KEY }} \
-            AWS_REGION=${{ secrets.AWS_REGION }} \
-            QUEUE_NAME_NOTIFICATION_GENERATION=${{ secrets.QUEUE_NAME_NOTIFICATION_GENERATION }} \
-            QUEUE_NAME_BUILDER=${{ secrets.QUEUE_NAME_BUILDER }} \
-            S3_BUCKET_NAME=${{ secrets.S3_BUCKET_NAME }} \
-            MONGO_INITDB_ROOT_USERNAME=${{ secrets.MONGO_INITDB_ROOT_USERNAME }} \
-            MONGO_INITDB_ROOT_PASSWORD=${{ secrets.MONGO_INITDB_ROOT_PASSWORD }} \
+            MONGO_URI=${{secrets.MONGO_URI}} \
+            URL_SERVICE_TECH=${{secrets.URL_SERVICE_TECH}} \
+            API_KEY=${{secrets.API_KEY}} \
+            AWS_ACCESS_KEY=${{secrets.AWS_ACCESS_KEY}} \
+            AWS_SECRET_KEY=${{secrets.AWS_SECRET_KEY}} \
+            AWS_REGION=${{secrets.AWS_REGION}} \
+            QUEUE_NAME_NOTIFICATION_GENERATION=${{secrets.QUEUE_NAME_NOTIFICATION_GENERATION}} \
+            QUEUE_NAME_BUILDER=${{secrets.QUEUE_NAME_BUILDER}} \
+            S3_BUCKET_NAME=${{secrets.S3_BUCKET_NAME}} \
+            MONGO_INITDB_ROOT_USERNAME=${{secrets.MONGO_INITDB_ROOT_USERNAME}} \
+            MONGO_INITDB_ROOT_PASSWORD=${{secrets.MONGO_INITDB_ROOT_PASSWORD}} \
             # Subir containers
             docker compose -f docker-compose.prod.yml up -d --build
           EOF
