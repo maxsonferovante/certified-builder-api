@@ -56,14 +56,6 @@ dependencyManagement {
         mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
     }
 }
-test {
-    jvmArgs = [
-            '-XX:+EnableDynamicAgentLoading',
-            '-Djdk.attach.allowAttachSelf=true',
-            '-XX:-UseSharedArchives'
-    ]
-    useJUnitPlatform()
-}
 tasks.named('test') {
     useJUnitPlatform()
 }
