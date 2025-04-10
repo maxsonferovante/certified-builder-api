@@ -59,8 +59,10 @@ dependencyManagement {
 test {
     jvmArgs = [
             '-XX:+EnableDynamicAgentLoading',
-            '-Djdk.attach.allowAttachSelf=true'
+            '-Djdk.attach.allowAttachSelf=true',
+            '-XX:-UseSharedArchives'
     ]
+    useJUnitPlatform()
 }
 tasks.named('test') {
     useJUnitPlatform()

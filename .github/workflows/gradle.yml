@@ -83,7 +83,7 @@ jobs:
         env:
           MONGO_INITDB_ROOT_USERNAME: myuser
           MONGO_INITDB_ROOT_PASSWORD: mypassword
-          SPRING_URL_SERVICE_TECH: ${{ secrets.URL_SERVICE_TECH }}
+          SPRING_URL_SERVICE_TECH: ${{secrets.URL_SERVICE_TECH}}
           SPRING_DATA_MONGODB_URI: mongodb://myuser:mypassword@localhost:27017/admin
           
           # AWS LocalStack Configuration
@@ -96,6 +96,7 @@ jobs:
           # SQS Configuration
           SPRING_CLOUD_AWS_QUEUE_NAME_NOTIFICATION_GENERATION: notification_generation.fifo
           SPRING_CLOUD_AWS_SQS_QUEUE_NAME: builder.fifo
+
           
           # S3 Configuration
           SPRING_CLOUD_AWS_S3_BUCKET_NAME: maal-upload-dev

@@ -48,13 +48,7 @@ class DeleteProductTests {
         // Given
         Integer productId = 1;
         ProductEntity product = new ProductEntity();
-        OrderEntity order = new OrderEntity();
-        CertificateEntity certificate = new CertificateEntity();
-
         when(productRepository.findByProductId(productId)).thenReturn(Optional.of(product));
-        when(orderRepository.findByProduct_ProductId(productId)).thenReturn(List.of(order));
-        when(certificateRepository.findByOrder_Product_ProductId(productId)).thenReturn(List.of(certificate));
-        // When
         DeleteProductResponse result = deleteProduct.execute(productId);
 
         // Then
