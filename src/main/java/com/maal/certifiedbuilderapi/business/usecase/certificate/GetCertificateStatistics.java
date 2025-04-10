@@ -36,14 +36,16 @@ public class GetCertificateStatistics {
         List<OrderEntity> orderEntities = orderRepository.findByProduct_ProductId(productId);
 
         long successfulCount = certificates.stream()
-                .filter(CertificateEntity::getSuccess)
-                .count();
-        
-        long failedCount = certificates.stream()
-                .filter(cert -> !cert.getSuccess())
+                .filter(cert -> Boolean.TRUE.equals(cert.getSuccess()))
                 .count();
 
-        long pendingCertificates = certificates.size() - (successfulCount + failedCount);
+        long failedCount = certificates.stream()
+                .filter(cert -> Boolean.FALSE.equals(cert.getSuccess()))
+                .count();
+
+        long pendingCertificates = certificates.stream()
+                .filter(cert -> cert.getSuccess() == null)
+                .count();
 
         return CertificateStatisticsResponse.builder()
                 .productId(product.getProductId())
