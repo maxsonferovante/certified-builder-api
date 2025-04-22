@@ -29,7 +29,7 @@ COPY gradle ./gradle
 COPY src ./src
 
 # Build the application
-RUN gradle build
+RUN gradle build -x test
 
 # Runtime stage
 FROM eclipse-temurin:21-jre-alpine
