@@ -43,6 +43,7 @@ public class ProcessOrderEvent {
         OrderEntity order =  orderRepository.findByOrderId(orderEvent.getOrderId())
                 .orElseThrow(() -> new IllegalArgumentException("Order not found: " + orderEvent.getOrderId()));
 
+        logger.info("Processing order: {}", orderEvent.getOrderId());
         processCertificate(order, orderEvent);
     }
 
@@ -69,12 +70,12 @@ public class ProcessOrderEvent {
         Boolean eventSuccess = event.getSuccess();
         if (eventSuccess != null && eventSuccess) {
             s3ClientCustomer.deleteCertificate(certificate.getCertificateKey());
-            
             certificate.setCertificateKey(event.getCertificateKey());
             certificate.setCertificateUrl(s3ClientCustomer.getUrl(event.getCertificateKey()));
             certificate.setSuccess(true);
             certificate.setGeneretedDate(LocalDateTime.now());
         }
+        logger.info("Update register certificate by order {} with status success {}", event.getOrderId(), event.getSuccess());
         certificateRepository.save(certificate);
         notifiesCertificateGeneration(certificate);
     }
@@ -95,7 +96,7 @@ public class ProcessOrderEvent {
             certificate.setCertificateUrl(s3ClientCustomer.getUrl(event.getCertificateKey()));
             certificate.setGeneretedDate(LocalDateTime.now());
         }
-
+        logger.info("Create register certificate by order {} with status success {}", event.getOrderId(), event.getSuccess());
         certificateRepository.save(certificate);
         notifiesCertificateGeneration(certificate);
     }
@@ -105,6 +106,5 @@ public class ProcessOrderEvent {
                 certificate
         );
         techFloripa.notifiesCertificateGeneration(recoverCertificatesResponse);
-
     }
 } 
