@@ -2,6 +2,7 @@ package com.maal.certifiedbuilderapi.business.usecases;
 
 import com.maal.certifiedbuilderapi.business.dto.BuildOrdersResponse;
 import com.maal.certifiedbuilderapi.business.usecase.certificate.CertificateConstructionOrder;
+import com.maal.certifiedbuilderapi.config.TestConfig;
 import com.maal.certifiedbuilderapi.infrastructure.aws.sqs.OrderEventPublisher;
 import com.maal.certifiedbuilderapi.infrastructure.client.TechFloripa;
 import com.maal.certifiedbuilderapi.infrastructure.client.response.TechOrdersResponse;
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.annotation.Import;
 
 import java.util.List;
 import java.util.Optional;
@@ -23,6 +25,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@Import(TestConfig.class)
 class CertificateConstructionOrderTests {
 
     @Mock
@@ -42,7 +45,6 @@ class CertificateConstructionOrderTests {
 
     @InjectMocks
     private CertificateConstructionOrder certificateConstructionOrder;
-
 
     @Test
     @DisplayName("Should process orders and create certificates with list of orders")
@@ -103,7 +105,6 @@ class CertificateConstructionOrderTests {
         verify(participantRespository, times(1)).save(any());
         verify(orderRepository, times(1)).save(any());
     }
-
 
     @Test
     @DisplayName("Should return empty response when no orders are provided")
