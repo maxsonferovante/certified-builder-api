@@ -28,7 +28,19 @@ ext {
 }
 
 dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
+    // AWS SDK v2.x - BOM para gerenciar versões
+    implementation platform('software.amazon.awssdk:bom:2.28.29')
+    
+    // DynamoDB com AWS SDK v2.x
+    implementation 'software.amazon.awssdk:dynamodb'
+    implementation 'software.amazon.awssdk:dynamodb-enhanced'
+    
+    // Spring Boot AWS starters para SDK v2.x
+    implementation 'io.awspring.cloud:spring-cloud-aws-starter:3.3.0'
+    implementation 'io.awspring.cloud:spring-cloud-aws-starter-dynamodb:3.3.0'
+    
+    // Dependências básicas do Spring Boot (incluindo transações)
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-test'

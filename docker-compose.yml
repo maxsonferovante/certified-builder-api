@@ -13,16 +13,8 @@ services:
 #      context: .
 #    ports:
 #      - 8081:8081
-  mongodb:
-    container_name: mongodb-certified-builder-api
-    image: mongodb/mongodb-community-server:7.0.16-ubuntu2204
-    ports:
-      - 27017:27017
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: myuser
-      MONGO_INITDB_ROOT_PASSWORD: mypassword
 
-
+  # LocalStack - Simula serviços AWS (S3, SQS, DynamoDB)
   localstack:
     user: root
     container_name: "localstack_main"
@@ -34,10 +26,32 @@ services:
     environment:
       # LocalStack configuration: https://docs.localstack.cloud/references/configuration/
       - DEBUG=${DEBUG:-0}
-      - SERVICES=s3,sqs
+      - SERVICES=s3,sqs,dynamodb         # Adicionado DynamoDB
       - AWS_ACCESS_KEY_ID=test
       - AWS_SECRET_ACCESS_KEY=test
+      - AWS_DEFAULT_REGION=us-west-2
     volumes:
       - "${PWD}/init-aws.sh:/etc/localstack/init/ready.d/init-aws.sh:ro"
+      - "${PWD}/docker:/docker:ro"        # Monta diretório com schemas
       - "${maal:-./volume}:/var/lib/localstack"
       - "/var/run/docker.sock:/var/run/docker.sock"
+    healthcheck:
+      test: ["CMD-SHELL", 'awslocal dynamodb list-tables --region us-west-2 || exit 1']
+      interval: 15s
+      timeout: 10s
+      retries: 10
+
+  # DynamoDB Admin - Interface web para gerenciar DynamoDB
+  dynamodb-admin:
+    image: aaronshaf/dynamodb-admin
+    container_name: dynamodb-admin
+    ports:
+      - "8001:8001"
+    environment:
+      DYNAMO_ENDPOINT: "http://localstack:4566"  # Aponta para LocalStack
+      AWS_REGION: "us-west-2"
+      AWS_ACCESS_KEY_ID: "test"
+      AWS_SECRET_ACCESS_KEY: "test"
+    depends_on:
+      localstack:
+        condition: service_healthy

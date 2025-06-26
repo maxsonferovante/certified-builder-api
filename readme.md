@@ -5,15 +5,16 @@
 
 Certified Builder API é uma aplicação desenvolvida com Spring Boot para gerenciar e coordenar a geração de certificados digitais personalizados para eventos e usuários. O projeto utiliza uma arquitetura orientada a eventos com processamento assíncrono via Amazon SQS e funções AWS Lambda.
 
-A API centraliza a criação de ordens de geração de certificados, delega o processamento a uma Lambda via fila SQS e acompanha o progresso por meio de eventos de retorno também enviados por outra fila SQS. Os certificados gerados são armazenados no Amazon S3, com URLs temporárias de acesso retornadas aos usuários.
+A API centraliza a criação de ordens de geração de certificados, delega o processamento a uma Lambda via fila SQS e acompanha o progresso por meio de eventos de retorno também enviados por outra fila SQS. Os certificados gerados são armazenados no Amazon S3, com URLs temporárias de acesso retornadas aos usuários. A aplicação utiliza Amazon DynamoDB como banco de dados NoSQL para armazenamento de entidades com alta performance e escalabilidade.
 
 ## Tecnologias Utilizadas
 
-- Java 24
+- Java 21
 - Spring Boot 3.4.4
 - Spring Security (API Key Authentication)
 - Spring Cloud AWS
-- MongoDB
+- Amazon DynamoDB
+- Spring Data DynamoDB
 - Gradle
 - Docker
 - LocalStack (para ambiente de desenvolvimento)
@@ -45,6 +46,7 @@ A API centraliza a criação de ordens de geração de certificados, delega o pr
 - **Criação de ordens de certificados** para produtos ou eventos
 - **Processamento assíncrono** via Amazon SQS e AWS Lambda
 - **Armazenamento de certificados** no Amazon S3
+- **Persistência de dados** com Amazon DynamoDB (NoSQL)
 - **Monitoramento de progresso** da geração
 - **Recuperação de certificados gerados**
 - **Autenticação via API Key**
@@ -57,15 +59,15 @@ A API centraliza a criação de ordens de geração de certificados, delega o pr
 4. Ao concluir a tarefa, a Lambda:
    - Armazena os certificados no S3.
    - Envia uma mensagem de retorno para a **fila SQS de notificações**, sinalizando o status (sucesso ou falha).
-5. A API, que consome essa fila, atualiza o progresso e armazena os metadados no MongoDB.
+5. A API, que consome essa fila, atualiza o progresso e armazena os metadados no DynamoDB.
 6. O cliente pode consultar o progresso e os certificados gerados pelos endpoints `/statistics` e `/recover-certificates`.
  
 ## Pré-requisitos
 
-- JDK 24
+- JDK 21
 - Docker (opcional)
 - Credenciais AWS configuradas
-- MongoDB
+- Amazon DynamoDB (Local ou AWS)
 - LocalStack (para ambiente de desenvolvimento)
 
 ## Configuração
@@ -86,8 +88,15 @@ QUEUE_NAME_BUILDER=your_builder_queue.fifo
 # S3
 S3_BUCKET_NAME=your_bucket_name
 
+# DynamoDB Configuration (endpoint específico)
+AMAZON_DYNAMODB_ENDPOINT=http://localhost:8000
+
+# AWS Credentials (compartilhadas entre SQS, S3 e DynamoDB)
+SPRING_CLOUD_AWS_CREDENTIALS_ACCESSKEY=local
+SPRING_CLOUD_AWS_CREDENTIALS_SECRETKEY=local
+SPRING_CLOUD_AWS_REGION_STATIC=us-west-2
+
 # Other Configurations
-MONGODB_URI=your_mongodb_uri
 URL_SERVICE_TECH=your_tech_service_url
 API_KEY=your_api_key
 ```
@@ -108,18 +117,39 @@ O LocalStack irá:
 - Criar o bucket S3
 - Configurar os endpoints locais para os serviços AWS
 
+### DynamoDB Local
+
+Para desenvolvimento local, é utilizado o DynamoDB Local através do Docker:
+
+```bash
+# Iniciar DynamoDB Local com tabelas configuradas
+docker-compose -f docker/docker-compose-dynamodb.yml up -d
+
+# Acessar DynamoDB Admin (interface web)
+http://localhost:8001
+```
+
+O DynamoDB Local irá:
+- Criar as tabelas: `certificates`, `orders`, `participants`, `products`
+- Configurar índices secundários globais para consultas otimizadas
+- Fornecer interface de administração web
+
 ### AWS Services
 
 A API utiliza os seguintes serviços AWS:
-- SQS para processamento de mensagens
-- S3 para armazenamento de arquivos
+- **SQS** para processamento de mensagens
+- **S3** para armazenamento de arquivos
+- **DynamoDB** para persistência de dados NoSQL
 
 ## Executando a Aplicação
 
-### Localmente (com LocalStack)
+### Localmente (com DynamoDB Local)
 
 ```bash
-# Iniciar LocalStack
+# Iniciar DynamoDB Local e criar tabelas
+docker-compose -f docker/docker-compose-dynamodb.yml up -d
+
+# Iniciar LocalStack (SQS e S3)
 docker-compose up -d
 
 # Executar a aplicação
@@ -151,11 +181,17 @@ docker run -p 8081:8081 certified-builder-api
 ### AWS Services
 - SQS: [Documentação Spring Cloud AWS SQS](https://www.baeldung.com/java-spring-cloud-aws-v3-intro)
 - S3: [Documentação Spring Cloud AWS S3](https://docs.awspring.io/spring-cloud-aws/docs/3.3.0/reference/html/index.html#spring-cloud-aws-s3)
+- DynamoDB: [Documentação Spring Data DynamoDB](https://github.com/derjust/spring-data-dynamodb/wiki)
 
 ### LocalStack
 - [Documentação Oficial do LocalStack](https://docs.localstack.cloud/user-guide/)
 - [Guia de Serviços AWS Suportados](https://docs.localstack.cloud/user-guide/aws/feature-coverage/)
 - [Configuração de Integração com Spring Boot](https://docs.localstack.cloud/user-guide/integrations/spring-boot/)
+
+### DynamoDB
+- [Documentação DynamoDB Local](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.html)
+- [Spring Data DynamoDB Guide](https://github.com/derjust/spring-data-dynamodb/wiki)
+- [AWS DynamoDB Best Practices](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/best-practices.html)
 
 ## Endpoints
 
@@ -335,6 +371,31 @@ curl --request GET \
 - Todos os endpoints requerem autenticação via API Key no header `X-API-KEY`
 - Recomenda-se implementar polling no endpoint de estatísticas até que `successfulCertificates` seja igual a `totalCertificates`
 - As URLs dos certificados são temporárias e expiram após 24 horas
+
+## Estrutura do Banco de Dados (DynamoDB)
+
+### Tabelas Principais
+
+#### **certificates**
+- **Chave Primária**: `id` (String)
+- **Dados**: Certificados gerados com informações desnormalizadas
+- **Campos**: success, certificateUrl, orderId, productId, participantEmail, etc.
+
+#### **orders**
+- **Chave Primária**: `id` (String)
+- **Índice Secundário**: `OrderIdIndex` por `orderId`
+- **Dados**: Pedidos de geração com informações desnormalizadas
+
+#### **participants**
+- **Chave Primária**: `id` (String)
+- **Índice Secundário**: `EmailIndex` por `email`
+- **Dados**: Informações dos participantes
+
+#### **products**
+- **Chave Primária**: `id` (String)
+- **Índice Secundário**: `ProductIdIndex` por `productId`
+- **Dados**: Configurações de produtos/eventos
+
 
 ## Contribuindo
 
