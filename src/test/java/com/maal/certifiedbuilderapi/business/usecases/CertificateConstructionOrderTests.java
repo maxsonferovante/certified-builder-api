@@ -11,11 +11,10 @@ import com.maal.certifiedbuilderapi.infrastructure.repository.ParticipantResposi
 import com.maal.certifiedbuilderapi.infrastructure.repository.ProductRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.util.List;
 import java.util.Optional;
@@ -24,27 +23,27 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
-@Import(TestConfig.class)
+@SpringBootTest(classes = TestConfig.class)
+@ActiveProfiles("test")
 class CertificateConstructionOrderTests {
 
-    @Mock
-    private TechFloripa techFloripa;
+    @Autowired
+    private CertificateConstructionOrder certificateConstructionOrder;
 
-    @Mock
+    @Autowired
     private OrderRepository orderRepository;
 
-    @Mock
+    @Autowired
     private ParticipantRespository participantRespository;
 
-    @Mock
+    @Autowired
     private ProductRepository productRepository;
 
-    @Mock
-    private OrderEventPublisher orderEventPublisher;
+    @Autowired
+    private TechFloripa techFloripa;
 
-    @InjectMocks
-    private CertificateConstructionOrder certificateConstructionOrder;
+    @Autowired
+    private OrderEventPublisher orderEventPublisher;
 
     @Test
     @DisplayName("Should process orders and create certificates with list of orders")

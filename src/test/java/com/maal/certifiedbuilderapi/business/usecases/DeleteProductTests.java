@@ -10,11 +10,9 @@ import com.maal.certifiedbuilderapi.infrastructure.repository.OrderRepository;
 import com.maal.certifiedbuilderapi.infrastructure.repository.ProductRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.annotation.Import;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.util.Optional;
 
@@ -25,20 +23,20 @@ import static org.mockito.Mockito.*;
  * Testes para DeleteProduct
  * Atualizados para usar métodos desnormalizados do DynamoDB
  */
-@ExtendWith(MockitoExtension.class)
-@Import(TestConfig.class)
+@SpringBootTest(classes = TestConfig.class)
+@ActiveProfiles("test")
 class DeleteProductTests {
 
-    @Mock
+    @Autowired
     private ProductRepository productRepository;
 
-    @Mock
+    @Autowired
     private OrderRepository orderRepository;
 
-    @Mock
+    @Autowired
     private CertificateRepository certificateRepository;
 
-    @InjectMocks
+    @Autowired
     private DeleteProduct deleteProduct;
 
     @Test

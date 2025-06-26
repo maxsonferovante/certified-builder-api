@@ -1,18 +1,33 @@
 package com.maal.certifiedbuilderapi.config;
 
+import com.maal.certifiedbuilderapi.business.usecase.certificate.CertificateConstructionOrder;
+import com.maal.certifiedbuilderapi.business.usecase.certificate.DeleteProduct;
+import com.maal.certifiedbuilderapi.business.usecase.certificate.GetCertificateStatistics;
+import com.maal.certifiedbuilderapi.infrastructure.aws.s3.S3ClientCustomer;
+import com.maal.certifiedbuilderapi.infrastructure.aws.sqs.OrderEventPublisher;
+import com.maal.certifiedbuilderapi.infrastructure.client.TechFloripa;
 import com.maal.certifiedbuilderapi.infrastructure.repository.CertificateRepository;
 import com.maal.certifiedbuilderapi.infrastructure.repository.OrderRepository;
 import com.maal.certifiedbuilderapi.infrastructure.repository.ParticipantRespository;
 import com.maal.certifiedbuilderapi.infrastructure.repository.ProductRepository;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
+import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Primary;
 
 /**
- * Configuração de teste que substitui os repositórios reais por mocks
- * Evita a necessidade de configurar DynamoDB local para testes unitários
+ * Configuração de teste completamente isolada
+ * Não carrega configurações automáticas da aplicação, apenas mocks necessários
  */
 @TestConfiguration
+@EnableAutoConfiguration(exclude = {
+    DataSourceAutoConfiguration.class,
+    HibernateJpaAutoConfiguration.class
+})
+@ComponentScan(basePackages = "com.maal.certifiedbuilderapi.business.usecase")
 public class TestConfig {
 
     /**
@@ -49,5 +64,53 @@ public class TestConfig {
     @Primary
     public ProductRepository productRepository() {
         return org.mockito.Mockito.mock(ProductRepository.class);
+    }
+
+    @Bean
+    @Primary
+    public OrderEventPublisher orderEventPublisher() {
+        return org.mockito.Mockito.mock(OrderEventPublisher.class);
+    }
+
+    @Bean
+    @Primary
+    public TechFloripa techFloripa() {
+        return org.mockito.Mockito.mock(TechFloripa.class);
+    }
+
+    @Bean
+    @Primary
+    public S3ClientCustomer s3ClientCustomer() {
+        return org.mockito.Mockito.mock(S3ClientCustomer.class);
+    }
+
+    @Bean
+    public CertificateConstructionOrder certificateConstructionOrder() {
+        return new CertificateConstructionOrder(
+            techFloripa(),
+            orderRepository(),
+            participantRepository(),
+            productRepository(),
+            orderEventPublisher()
+        );
+    }
+
+    @Bean
+    public DeleteProduct deleteProduct() {
+        return new DeleteProduct(
+            orderRepository(),
+            productRepository(),
+            certificateRepository(),
+            s3ClientCustomer()
+        );
+    }
+
+    @Bean
+    public GetCertificateStatistics getCertificateStatistics() {
+        return new GetCertificateStatistics(
+            orderRepository(),
+            certificateRepository(),
+            productRepository()
+        );
     }
 } 
