@@ -15,20 +15,12 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     services:
-      mongodb:
-        image: mongodb/mongodb-community-server:7.0.16-ubuntu2204
-        env:
-          MONGO_INITDB_ROOT_USERNAME: myuser
-          MONGO_INITDB_ROOT_PASSWORD: mypassword
-        ports:
-          - 27017:27017
-      
       localstack:
         image: localstack/localstack
         ports:
           - 4566:4566
         env:
-          SERVICES: s3,sqs
+          SERVICES: s3,sqs,dynamodb
           DEBUG: 1
           AWS_DEFAULT_REGION: us-east-1
           AWS_ACCESS_KEY_ID: test
@@ -58,8 +50,12 @@ jobs:
 
       - name: Wait for LocalStack to be ready
         run: |
+          while ! curl -s http://localhost:4566/_localstack/health | grep -q '"dynamodb": "available"'; do
+            echo "Waiting for LocalStack DynamoDB to be ready..."
+            sleep 2
+          done
           while ! curl -s http://localhost:4566/_localstack/health | grep -q '"sqs": "available"'; do
-            echo "Waiting for LocalStack to be ready..."
+            echo "Waiting for LocalStack SQS to be ready..."
             sleep 2
           done
 
@@ -74,6 +70,41 @@ jobs:
           
           # Criar bucket S3
           awslocal s3api create-bucket --bucket maal-upload-dev
+          
+          # Criar tabelas DynamoDB
+          awslocal dynamodb create-table \
+            --table-name certificates \
+            --attribute-definitions AttributeName=id,AttributeType=S \
+            --key-schema AttributeName=id,KeyType=HASH \
+            --billing-mode PAY_PER_REQUEST
+          
+          awslocal dynamodb create-table \
+            --table-name orders \
+            --attribute-definitions AttributeName=id,AttributeType=S \
+            --key-schema AttributeName=id,KeyType=HASH \
+            --billing-mode PAY_PER_REQUEST
+          
+          awslocal dynamodb create-table \
+            --table-name participants \
+            --attribute-definitions AttributeName=id,AttributeType=S \
+            --key-schema AttributeName=id,KeyType=HASH \
+            --billing-mode PAY_PER_REQUEST
+          
+          awslocal dynamodb create-table \
+            --table-name products \
+            --attribute-definitions AttributeName=id,AttributeType=S \
+            --key-schema AttributeName=id,KeyType=HASH \
+            --billing-mode PAY_PER_REQUEST
+
+      - name: Validate DynamoDB tables
+        run: |
+          echo "Validating DynamoDB tables creation..."
+          awslocal dynamodb list-tables
+          awslocal dynamodb describe-table --table-name certificates
+          awslocal dynamodb describe-table --table-name orders
+          awslocal dynamodb describe-table --table-name participants
+          awslocal dynamodb describe-table --table-name products
+          echo "All DynamoDB tables created successfully!"
 
       - name: Clean Build Cache
         run: ./gradlew clean build --refresh-dependencies
@@ -81,10 +112,7 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew build --stacktrace --info
         env:
-          MONGO_INITDB_ROOT_USERNAME: myuser
-          MONGO_INITDB_ROOT_PASSWORD: mypassword
           SPRING_URL_SERVICE_TECH: ${{secrets.URL_SERVICE_TECH}}
-          SPRING_DATA_MONGODB_URI: mongodb://myuser:mypassword@localhost:27017/admin
           
           # AWS LocalStack Configuration
           SPRING_CLOUD_AWS_ENDPOINT: http://localhost:4566
@@ -93,10 +121,15 @@ jobs:
           SPRING_CLOUD_AWS_REGION_STATIC: us-east-1
           SPRING_CLOUD_AWS_REGION_AUTO: false
           
+          # DynamoDB Configuration
+          AMAZON_DYNAMODB_ENDPOINT: http://localhost:4566
+          AWS_ACCESSKEYID: test
+          AWS_SECRETACCESSKEY: test
+          AWS_REGION: us-east-1
+          
           # SQS Configuration
           SPRING_CLOUD_AWS_QUEUE_NAME_NOTIFICATION_GENERATION: notification_generation.fifo
           SPRING_CLOUD_AWS_SQS_QUEUE_NAME: builder.fifo
-
           
           # S3 Configuration
           SPRING_CLOUD_AWS_S3_BUCKET_NAME: maal-upload-dev
