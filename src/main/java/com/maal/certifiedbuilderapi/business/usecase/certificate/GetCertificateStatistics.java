@@ -13,6 +13,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+/**
+ * Use case para obter estatísticas de certificados
+ * Adaptado para trabalhar com dados desnormalizados do DynamoDB
+ */
 @Service
 @RequiredArgsConstructor
 public class GetCertificateStatistics {
@@ -23,6 +27,7 @@ public class GetCertificateStatistics {
 
     /**
      * Gets statistics about certificate processing for a specific product.
+     * Agora usa dados desnormalizados para melhor performance
      *
      * @param productId The ID of the product to get statistics for
      * @return CertificateStatisticsResponse containing the statistics
@@ -32,8 +37,9 @@ public class GetCertificateStatistics {
         ProductEntity product = productRepository.findByProductId(productId)
                 .orElseThrow(() -> new IllegalArgumentException("Product not found: " + productId));
 
-        List<CertificateEntity> certificates = certificateRepository.findByOrder_Product_ProductId(productId);
-        List<OrderEntity> orderEntities = orderRepository.findByProduct_ProductId(productId);
+        // Usa métodos desnormalizados - busca direta por productId
+        List<CertificateEntity> certificates = certificateRepository.findByProductId(productId);
+        List<OrderEntity> orderEntities = orderRepository.findByProductId(productId);
 
         long successfulCount = certificates.stream()
                 .filter(cert -> Boolean.TRUE.equals(cert.getSuccess()))

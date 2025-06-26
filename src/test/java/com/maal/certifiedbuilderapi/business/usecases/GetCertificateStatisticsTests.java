@@ -21,6 +21,10 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+/**
+ * Testes para GetCertificateStatistics
+ * Atualizados para usar métodos desnormalizados do DynamoDB
+ */
 @ExtendWith(MockitoExtension.class)
 class GetCertificateStatisticsTests {
 
@@ -56,8 +60,8 @@ class GetCertificateStatisticsTests {
         cert3.setSuccess(null);
 
         when(productRepository.findByProductId(productId)).thenReturn(Optional.of(product));
-        when(orderRepository.findByProduct_ProductId(productId)).thenReturn(List.of(order1, order2));
-        when(certificateRepository.findByOrder_Product_ProductId(productId)).thenReturn(List.of(cert1, cert2, cert3));
+        when(orderRepository.findByProductId(productId)).thenReturn(List.of(order1, order2));
+        when(certificateRepository.findByProductId(productId)).thenReturn(List.of(cert1, cert2, cert3));
 
         // When
         CertificateStatisticsResponse result = getCertificateStatistics.execute(productId);
@@ -97,8 +101,8 @@ class GetCertificateStatisticsTests {
         product.setProductName("Empty Product");
 
         when(productRepository.findByProductId(productId)).thenReturn(Optional.of(product));
-        when(orderRepository.findByProduct_ProductId(productId)).thenReturn(List.of());
-        when(certificateRepository.findByOrder_Product_ProductId(productId)).thenReturn(List.of());
+        when(orderRepository.findByProductId(productId)).thenReturn(List.of());
+        when(certificateRepository.findByProductId(productId)).thenReturn(List.of());
 
         // When
         CertificateStatisticsResponse result = getCertificateStatistics.execute(productId);
