@@ -15,8 +15,8 @@ import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Primary;
+import org.springframework.context.annotation.Profile;
 
 /**
  * Configuração de teste completamente isolada
@@ -27,7 +27,7 @@ import org.springframework.context.annotation.Primary;
     DataSourceAutoConfiguration.class,
     HibernateJpaAutoConfiguration.class
 })
-@ComponentScan(basePackages = "com.maal.certifiedbuilderapi.business.usecase")
+@Profile("test")
 public class TestConfig {
 
     /**
@@ -74,43 +74,52 @@ public class TestConfig {
 
     @Bean
     @Primary
-    public TechFloripa techFloripa() {
-        return org.mockito.Mockito.mock(TechFloripa.class);
-    }
-
-    @Bean
-    @Primary
     public S3ClientCustomer s3ClientCustomer() {
         return org.mockito.Mockito.mock(S3ClientCustomer.class);
     }
 
     @Bean
-    public CertificateConstructionOrder certificateConstructionOrder() {
+    public CertificateConstructionOrder certificateConstructionOrder(
+        TechFloripa techFloripa,
+        OrderRepository orderRepository,
+        ParticipantRespository participantRepository,
+        ProductRepository productRepository,
+        OrderEventPublisher orderEventPublisher
+    ) {
         return new CertificateConstructionOrder(
-            techFloripa(),
-            orderRepository(),
-            participantRepository(),
-            productRepository(),
-            orderEventPublisher()
+            techFloripa,
+            orderRepository,
+            participantRepository,
+            productRepository,
+            orderEventPublisher
         );
     }
 
     @Bean
-    public DeleteProduct deleteProduct() {
+    public DeleteProduct deleteProduct(
+        OrderRepository orderRepository,
+        ProductRepository productRepository,
+        CertificateRepository certificateRepository,
+        S3ClientCustomer s3ClientCustomer
+    ) {
         return new DeleteProduct(
-            orderRepository(),
-            productRepository(),
-            certificateRepository(),
-            s3ClientCustomer()
+            orderRepository,
+            productRepository,
+            certificateRepository,
+            s3ClientCustomer
         );
     }
 
     @Bean
-    public GetCertificateStatistics getCertificateStatistics() {
+    public GetCertificateStatistics getCertificateStatistics(
+        OrderRepository orderRepository,
+        CertificateRepository certificateRepository,
+        ProductRepository productRepository
+    ) {
         return new GetCertificateStatistics(
-            orderRepository(),
-            certificateRepository(),
-            productRepository()
+            orderRepository,
+            certificateRepository,
+            productRepository
         );
     }
 } 

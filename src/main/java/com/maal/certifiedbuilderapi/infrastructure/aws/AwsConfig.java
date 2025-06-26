@@ -3,6 +3,7 @@ package com.maal.certifiedbuilderapi.infrastructure.aws;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
@@ -14,6 +15,7 @@ import software.amazon.awssdk.regions.Region;
  * Todos os beans são compatíveis com AWS SDK v2.x
  */
 @Configuration
+@Profile("!test")
 public class AwsConfig {
 
     // === CREDENCIAIS AWS CENTRALIZADAS ===

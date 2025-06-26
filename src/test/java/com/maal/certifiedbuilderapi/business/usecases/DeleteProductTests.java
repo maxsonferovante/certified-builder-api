@@ -3,8 +3,12 @@ package com.maal.certifiedbuilderapi.business.usecases;
 import com.maal.certifiedbuilderapi.business.dto.DeleteProductResponse;
 import com.maal.certifiedbuilderapi.business.exception.ProductNotFoundException;
 import com.maal.certifiedbuilderapi.business.usecase.certificate.DeleteProduct;
+import com.maal.certifiedbuilderapi.config.FeignConfig;
 import com.maal.certifiedbuilderapi.config.TestConfig;
+import com.maal.certifiedbuilderapi.domain.entity.CertificateEntity;
+import com.maal.certifiedbuilderapi.domain.entity.OrderEntity;
 import com.maal.certifiedbuilderapi.domain.entity.ProductEntity;
+import com.maal.certifiedbuilderapi.infrastructure.aws.s3.S3ClientCustomer;
 import com.maal.certifiedbuilderapi.infrastructure.repository.CertificateRepository;
 import com.maal.certifiedbuilderapi.infrastructure.repository.OrderRepository;
 import com.maal.certifiedbuilderapi.infrastructure.repository.ProductRepository;
@@ -12,20 +16,28 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 /**
  * Testes para DeleteProduct
  * Atualizados para usar métodos desnormalizados do DynamoDB
  */
-@SpringBootTest(classes = TestConfig.class)
+@SpringBootTest
+@Import({TestConfig.class, FeignConfig.class})
 @ActiveProfiles("test")
 class DeleteProductTests {
+
+    @Autowired
+    private DeleteProduct deleteProduct;
 
     @Autowired
     private ProductRepository productRepository;
@@ -37,82 +49,80 @@ class DeleteProductTests {
     private CertificateRepository certificateRepository;
 
     @Autowired
-    private DeleteProduct deleteProduct;
+    private S3ClientCustomer s3ClientCustomer;
 
     @Test
     @DisplayName("Should delete product and related data successfully")
-    void shouldDeleteProductAndRelatedDataSuccessfully() {
+    void deleteProductAndRelatedDataSuccessfully() {
         // Given
         Integer productId = 1;
         ProductEntity product = new ProductEntity();
         product.setProductId(productId);
-        product.setProductName("Test Product");
+
+        OrderEntity order = new OrderEntity();
+        order.setOrderId(1);
+        order.setProductId(productId);
+
+        CertificateEntity certificate = new CertificateEntity();
+        certificate.setId(UUID.randomUUID().toString());
+        certificate.setOrderId(order.getOrderId());
 
         when(productRepository.findByProductId(productId)).thenReturn(Optional.of(product));
-        doNothing().when(productRepository).deleteByProductId(productId);
-        doNothing().when(orderRepository).deleteByProductId(productId);
-        doNothing().when(certificateRepository).deleteByProductId(productId);
+        when(orderRepository.findByProductId(productId)).thenReturn(List.of(order));
+        when(certificateRepository.findByOrderId(order.getOrderId())).thenReturn(Optional.of(certificate));
 
         // When
-        DeleteProductResponse result = deleteProduct.execute(productId);
+        DeleteProductResponse response = deleteProduct.execute(productId);
 
         // Then
-        assertNotNull(result);
-        assertEquals(productId, result.getProductId());
-        assertNotNull(result.getDeletedAt());
+        assertNotNull(response);
+        assertEquals(productId, response.getProductId());
+        assertNotNull(response.getDeletedAt());
 
-        // Verify interactions
-        verify(productRepository).findByProductId(productId);
-        verify(productRepository).deleteByProductId(productId);
-        verify(orderRepository).deleteByProductId(productId);
-        verify(certificateRepository).deleteByProductId(productId);
-    }
-
-    @Test
-    @DisplayName("Should throw ProductNotFoundException when product not found")
-    void shouldThrowProductNotFoundExceptionWhenProductNotFound() {
-        // Given
-        Integer productId = 99;
-        when(productRepository.findByProductId(productId)).thenReturn(Optional.empty());
-
-        // When & Then
-        ProductNotFoundException exception = assertThrows(
-                ProductNotFoundException.class,
-                () -> deleteProduct.execute(productId)
-        );
-        assertEquals("Product not found with ID: " + productId, exception.getMessage());
-
-        // Verify no deletion operations were called
-        verify(productRepository, never()).deleteByProductId(any());
-        verify(orderRepository, never()).deleteByProductId(any());
-        verify(certificateRepository, never()).deleteByProductId(any());
+        verify(certificateRepository, times(1)).deleteById(certificate.getId());
+        verify(orderRepository, times(1)).deleteById(order.getOrderId().toString());
+        verify(productRepository, times(1)).deleteById(productId.toString());
+        verify(s3ClientCustomer, times(1)).deleteCertificate(certificate.getId());
     }
 
     @Test
     @DisplayName("Should handle deletion when no related data exists")
-    void shouldHandleDeletionWhenNoRelatedDataExists() {
+    void handleDeletionWhenNoRelatedDataExists() {
         // Given
         Integer productId = 1;
         ProductEntity product = new ProductEntity();
         product.setProductId(productId);
-        product.setProductName("Empty Product");
 
         when(productRepository.findByProductId(productId)).thenReturn(Optional.of(product));
-        doNothing().when(productRepository).deleteByProductId(productId);
-        doNothing().when(orderRepository).deleteByProductId(productId);
-        doNothing().when(certificateRepository).deleteByProductId(productId);
+        when(orderRepository.findByProductId(productId)).thenReturn(List.of());
 
         // When
-        DeleteProductResponse result = deleteProduct.execute(productId);
+        DeleteProductResponse response = deleteProduct.execute(productId);
 
         // Then
-        assertNotNull(result);
-        assertEquals(productId, result.getProductId());
-        assertNotNull(result.getDeletedAt());
+        assertNotNull(response);
+        assertEquals(productId, response.getProductId());
+        assertNotNull(response.getDeletedAt());
 
-        // Verify all deletion operations were called even with no data
-        verify(productRepository).deleteByProductId(productId);
-        verify(orderRepository).deleteByProductId(productId);
-        verify(certificateRepository).deleteByProductId(productId);
+        verify(certificateRepository, never()).deleteById(any());
+        verify(orderRepository, never()).deleteById(any());
+        verify(productRepository, times(1)).deleteById(productId.toString());
+        verify(s3ClientCustomer, never()).deleteCertificate(any());
+    }
+
+    @Test
+    @DisplayName("Should throw ProductNotFoundException when product not found")
+    void throwProductNotFoundExceptionWhenProductNotFound() {
+        // Given
+        Integer productId = 1;
+        when(productRepository.findByProductId(productId)).thenReturn(Optional.empty());
+
+        // When/Then
+        assertThrows(ProductNotFoundException.class, () -> deleteProduct.execute(productId));
+
+        verify(certificateRepository, never()).deleteById(any());
+        verify(orderRepository, never()).deleteById(any());
+        verify(productRepository, never()).deleteById(any());
+        verify(s3ClientCustomer, never()).deleteCertificate(any());
     }
 }

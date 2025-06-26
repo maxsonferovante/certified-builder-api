@@ -2,6 +2,8 @@ package com.maal.certifiedbuilderapi.business.usecases;
 
 import com.maal.certifiedbuilderapi.business.dto.BuildOrdersResponse;
 import com.maal.certifiedbuilderapi.business.usecase.certificate.CertificateConstructionOrder;
+import com.maal.certifiedbuilderapi.config.AwsTestConfig;
+import com.maal.certifiedbuilderapi.config.FeignConfig;
 import com.maal.certifiedbuilderapi.config.TestConfig;
 import com.maal.certifiedbuilderapi.infrastructure.aws.sqs.OrderEventPublisher;
 import com.maal.certifiedbuilderapi.infrastructure.client.TechFloripa;
@@ -19,11 +21,12 @@ import org.springframework.test.context.ActiveProfiles;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-@SpringBootTest(classes = TestConfig.class)
+@SpringBootTest
+@Import({TestConfig.class, FeignConfig.class, AwsTestConfig.class})
 @ActiveProfiles("test")
 class CertificateConstructionOrderTests {
 
