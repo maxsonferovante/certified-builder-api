@@ -24,6 +24,10 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+/**
+ * Testes para DeleteProduct
+ * Atualizados para usar métodos desnormalizados do DynamoDB
+ */
 @ExtendWith(MockitoExtension.class)
 class DeleteProductTests {
 
@@ -49,6 +53,8 @@ class DeleteProductTests {
         Integer productId = 1;
         ProductEntity product = new ProductEntity();
         when(productRepository.findByProductId(productId)).thenReturn(Optional.of(product));
+        
+        // When
         DeleteProductResponse result = deleteProduct.execute(productId);
 
         // Then
@@ -56,13 +62,12 @@ class DeleteProductTests {
         assertEquals(productId, result.getProductId());
         assertNotNull(result.getDeletedAt());
 
-        // Verify
+        // Verify - Métodos atualizados para DynamoDB (dados desnormalizados)
         verify(productRepository).deleteByProductId(productId);
-        verify(orderRepository).deleteByProduct_ProductId(productId);
-        verify(certificateRepository).deleteByOrder_Product_ProductId(productId);
+        verify(orderRepository).deleteByProductId(productId);           // ✅ Atualizado
+        verify(certificateRepository).deleteByProductId(productId);     // ✅ Atualizado
         verify(s3ClientCustomer).deleteProductCertificatesDirectory(productId);
     }
-
 
     @Test
     @DisplayName("Should throw ProductNotFoundException when product does not exist")
@@ -99,10 +104,10 @@ class DeleteProductTests {
         assertEquals(productId, result.getProductId());
         assertNotNull(result.getDeletedAt());
 
-        // Verify
+        // Verify - Métodos atualizados para DynamoDB (dados desnormalizados)
         verify(productRepository).deleteByProductId(productId);
-        verify(orderRepository).deleteByProduct_ProductId(productId);
-        verify(certificateRepository).deleteByOrder_Product_ProductId(productId);
+        verify(orderRepository).deleteByProductId(productId);           // ✅ Atualizado
+        verify(certificateRepository).deleteByProductId(productId);     // ✅ Atualizado
         verify(s3ClientCustomer).deleteProductCertificatesDirectory(productId);
     }
 }

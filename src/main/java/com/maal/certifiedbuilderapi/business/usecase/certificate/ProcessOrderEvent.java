@@ -20,6 +20,7 @@ import java.util.Optional;
 
 /**
  * Use case responsible for processing order events and managing certificates.
+ * Adaptado para trabalhar com dados desnormalizados do DynamoDB
  */
 @Service
 @RequiredArgsConstructor
@@ -40,7 +41,7 @@ public class ProcessOrderEvent {
      */
     @Transactional
     public void execute(OrderEvent orderEvent) {
-        OrderEntity order =  orderRepository.findByOrderId(orderEvent.getOrderId())
+        OrderEntity order = orderRepository.findByOrderId(orderEvent.getOrderId())
                 .orElseThrow(() -> new IllegalArgumentException("Order not found: " + orderEvent.getOrderId()));
 
         logger.info("Processing order: {}", orderEvent.getOrderId());
@@ -49,12 +50,14 @@ public class ProcessOrderEvent {
 
     /**
      * Processes the certificate for a given order and event.
+     * Agora usa orderId para buscar o certificado (dados desnormalizados)
      *
      * @param order The order entity
      * @param event The order event
      */
     private void processCertificate(OrderEntity order, OrderEvent event) {
-        Optional<CertificateEntity> existingCertificate = certificateRepository.findByOrder(order);
+        // Busca certificado usando orderId (dados desnormalizados)
+        Optional<CertificateEntity> existingCertificate = certificateRepository.findByOrderId(order.getOrderId());
         existingCertificate.ifPresentOrElse(
                 certificateEntity -> updateExistingCertificate(certificateEntity, event),
                 () -> createNewCertificate(order, event));
@@ -73,7 +76,7 @@ public class ProcessOrderEvent {
             certificate.setCertificateKey(event.getCertificateKey());
             certificate.setCertificateUrl(s3ClientCustomer.getUrl(event.getCertificateKey()));
             certificate.setSuccess(true);
-            certificate.setGeneretedDate(LocalDateTime.now());
+            certificate.setGeneratedDateFromLocalDateTime(LocalDateTime.now());
         }
         logger.info("Update register certificate by order {} with status success {}", event.getOrderId(), event.getSuccess());
         certificateRepository.save(certificate);
@@ -82,20 +85,42 @@ public class ProcessOrderEvent {
 
     /**
      * Creates a new certificate based on the event.
+     * Agora preenche campos desnormalizados em vez de setar o objeto Order
      *
      * @param order The order entity
      * @param event The order event
      */
     private void createNewCertificate(OrderEntity order, OrderEvent event) {
         CertificateEntity certificate = new CertificateEntity();
-        certificate.setOrder(order);
+        
+        // === DADOS DESNORMALIZADOS DO PEDIDO ===
+        certificate.setOrderId(order.getOrderId());
+        certificate.setOrderDate(order.getOrderDate());
+        
+        // === DADOS DESNORMALIZADOS DO PRODUTO ===
+        certificate.setProductId(order.getProductId());
+        certificate.setProductName(order.getProductName());
+        certificate.setCertificateDetails(order.getCertificateDetails());
+        certificate.setCertificateLogo(order.getCertificateLogo());
+        certificate.setCertificateBackground(order.getCertificateBackground());
+        
+        // === DADOS DESNORMALIZADOS DO PARTICIPANTE ===
+        certificate.setParticipantEmail(order.getParticipantEmail());
+        certificate.setParticipantFirstName(order.getParticipantFirstName());
+        certificate.setParticipantLastName(order.getParticipantLastName());
+        certificate.setParticipantCpf(order.getParticipantCpf());
+        certificate.setParticipantPhone(order.getParticipantPhone());
+        certificate.setParticipantCity(order.getParticipantCity());
+        
+        // === DADOS DO CERTIFICADO ===
         certificate.setSuccess(event.getSuccess() != null && event.getSuccess());
         
         if (Boolean.TRUE.equals(event.getSuccess())) {
             certificate.setCertificateKey(event.getCertificateKey());
             certificate.setCertificateUrl(s3ClientCustomer.getUrl(event.getCertificateKey()));
-            certificate.setGeneretedDate(LocalDateTime.now());
+            certificate.setGeneratedDateFromLocalDateTime(LocalDateTime.now());
         }
+        
         logger.info("Create register certificate by order {} with status success {}", event.getOrderId(), event.getSuccess());
         certificateRepository.save(certificate);
         notifiesCertificateGeneration(certificate);

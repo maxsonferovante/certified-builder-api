@@ -16,6 +16,7 @@ import java.util.List;
 
 /**
  * Use case responsible for deleting a product and all its associated data.
+ * Adaptado para trabalhar com dados desnormalizados do DynamoDB
  * This includes:
  * - The product itself
  * - All associated orders
@@ -80,15 +81,18 @@ public class DeleteProduct {
 
     /**
      * Deletes all orders associated with the product.
+     * Agora usa dados desnormalizados - busca direta por productId
      *
      * @param productId The ID of the product whose orders should be deleted
      */
     private void deleteOrders(Integer productId) {
-        orderRepository.deleteByProduct_ProductId(productId);
+        // Método atualizado para DynamoDB - busca direta por productId desnormalizado
+        orderRepository.deleteByProductId(productId);
     }
 
     /**
      * Deletes all certificates associated with the product from both S3 and the database.
+     * Agora usa dados desnormalizados - busca direta por productId
      *
      * @param productId The ID of the product whose certificates should be deleted
      */
@@ -96,8 +100,8 @@ public class DeleteProduct {
         // Deleta todos os certificados do diretório no S3
         s3ClientCustomer.deleteProductCertificatesDirectory(productId);
         
-        // Deleta os registros dos certificados do banco de dados
-        certificateRepository.deleteByOrder_Product_ProductId(productId);
+        // Método atualizado para DynamoDB - busca direta por productId desnormalizado
+        certificateRepository.deleteByProductId(productId);
     }
 
     /**
