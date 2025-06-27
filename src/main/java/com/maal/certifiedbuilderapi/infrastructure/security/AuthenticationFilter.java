@@ -21,8 +21,17 @@ public class AuthenticationFilter extends GenericFilterBean {
 
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
+        HttpServletRequest httpRequest = (HttpServletRequest) servletRequest;
+        String requestPath = httpRequest.getRequestURI();
+        
+        // Permite acesso ao health check sem validação de API Key
+        if ("/api/v1/certified/health".equals(requestPath)) {
+            filterChain.doFilter(servletRequest, servletResponse);
+            return;
+        }
+        
         try {
-            Authentication authentication = AuthenticationService.getAuthentication((HttpServletRequest) servletRequest);
+            Authentication authentication = AuthenticationService.getAuthentication(httpRequest);
             SecurityContextHolder.getContext().setAuthentication(authentication);
             filterChain.doFilter(servletRequest, servletResponse);
         }
