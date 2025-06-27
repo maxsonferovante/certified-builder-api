@@ -5,6 +5,7 @@ import io.awspring.cloud.sqs.operations.SqsTemplate;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -12,9 +13,11 @@ import java.util.UUID;
 
 /**
  * Service responsible for publishing order events to SQS queue.
+ * @Profile("!test") garante que o publisher não seja carregado em testes
  */
 @Service
 @RequiredArgsConstructor
+@Profile("!test")
 public class OrderEventPublisher {
 
     private static final Logger logger = LoggerFactory.getLogger(OrderEventPublisher.class);
