@@ -127,9 +127,14 @@ public class ProcessOrderEvent {
     }
 
     private void notifiesCertificateGeneration(CertificateEntity certificate) {
-        RecoverCertificatesResponse recoverCertificatesResponse = certificanteMapper.certificateEntityToResponse(
-                certificate
-        );
-        techFloripa.notifiesCertificateGeneration(recoverCertificatesResponse);
+        try {
+            RecoverCertificatesResponse recoverCertificatesResponse = certificanteMapper.certificateEntityToResponse(
+                    certificate
+            );
+            techFloripa.notifiesCertificateGeneration(recoverCertificatesResponse);
+            logger.info("Notified certificate generation for order {}", certificate.getOrderId());
+        } catch (Exception e) {
+            logger.error("Error notifying certificate generation: {}", e.getMessage());
+        }
     }
 } 

@@ -4,6 +4,7 @@ import com.maal.certifiedbuilderapi.infrastructure.aws.sqs.OrderEventListener;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import io.awspring.cloud.s3.S3Template;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -17,8 +18,13 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Cliente S3 para operações com objetos
+ * @Profile("!test") garante que não seja carregado durante testes
+ */
 @Component
 @AllArgsConstructor
+@Profile("!test")
 public class S3ClientCustomer {
     private static final Logger logger = LoggerFactory.getLogger(S3ClientCustomer.class);
     private final S3Properties s3Properties;

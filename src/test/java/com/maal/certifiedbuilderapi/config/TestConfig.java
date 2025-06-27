@@ -21,6 +21,7 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * Configuração específica para testes
@@ -193,5 +194,39 @@ public class TestConfig {
     @Primary
     public OrderEventPublisher orderEventPublisher() {
         return mock(OrderEventPublisher.class);
+    }
+
+    /**
+     * Mock do S3Properties para testes
+     * Como o real tem @Profile("!test"), este mock será usado nos testes
+     */
+    @Bean
+    @Primary
+    public com.maal.certifiedbuilderapi.infrastructure.aws.s3.S3Properties s3Properties() {
+        var mock = mock(com.maal.certifiedbuilderapi.infrastructure.aws.s3.S3Properties.class);
+        when(mock.getBucketName()).thenReturn("test-bucket-mock");
+        return mock;
+    }
+
+    /**
+     * Mock do S3ClientCustomer para testes
+     * Como o real tem @Profile("!test"), este mock será usado nos testes
+     */
+    @Bean
+    @Primary
+    public com.maal.certifiedbuilderapi.infrastructure.aws.s3.S3ClientCustomer s3ClientCustomer() {
+        return mock(com.maal.certifiedbuilderapi.infrastructure.aws.s3.S3ClientCustomer.class);
+    }
+
+    /**
+     * Mock do EventQueuesProperties para testes
+     * Como o real tem @Profile("!test"), este mock será usado nos testes
+     */
+    @Bean
+    @Primary
+    public com.maal.certifiedbuilderapi.infrastructure.aws.sqs.EventQueuesProperties eventQueuesProperties() {
+        var mock = mock(com.maal.certifiedbuilderapi.infrastructure.aws.sqs.EventQueuesProperties.class);
+        when(mock.getBuilderQueueName()).thenReturn("test-queue-mock.fifo");
+        return mock;
     }
 } 

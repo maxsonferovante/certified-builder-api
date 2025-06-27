@@ -7,6 +7,8 @@ import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfi
 import org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cloud.openfeign.EnableFeignClients;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 
 // Configuração da aplicação Spring Boot - excluindo auto-configurações de segurança
 @SpringBootApplication(exclude = {
@@ -14,9 +16,6 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
     UserDetailsServiceAutoConfiguration.class
 })
 
-
-//Finally, we need to use the @EnableConfigurationProperties annotation in a @Configuration annotated class, or the main Spring Application class, to let Spring Boot know we want to populate it with our application.yml properties
-@EnableConfigurationProperties(EventQueuesProperties.class)
 @EnableFeignClients
 public class CertifiedBuilderApiApplication {
 
@@ -24,4 +23,12 @@ public class CertifiedBuilderApiApplication {
         SpringApplication.run(CertifiedBuilderApiApplication.class, args);
     }
 
+    /**
+     * Configuração condicional para carregar EventQueuesProperties apenas em ambientes não-test
+     */
+    @Configuration
+    @Profile("!test")
+    @EnableConfigurationProperties(EventQueuesProperties.class)
+    static class ProductionConfiguration {
+    }
 }
