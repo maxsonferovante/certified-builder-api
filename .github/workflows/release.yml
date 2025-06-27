@@ -3,7 +3,7 @@ name: Gerenciamento de Tags, Releases e Deploy
 on:
   push:
     branches:
-      - main
+      - master
   workflow_dispatch:  # Permite execução manual do workflow
 
 permissions:
