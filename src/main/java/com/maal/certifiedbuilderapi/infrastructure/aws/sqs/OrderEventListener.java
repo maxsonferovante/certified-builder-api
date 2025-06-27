@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
+import org.springframework.context.annotation.Profile;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -18,9 +19,11 @@ import java.util.List;
 /**
  * Listener for order events from SQS queue.
  * Processes order events and manages certificate generation.
+ * @Profile("!test") garante que o listener não seja carregado em testes
  */
 @Component
 @RequiredArgsConstructor
+@Profile("!test")
 public class OrderEventListener {
 
     private static final Logger logger = LoggerFactory.getLogger(OrderEventListener.class);

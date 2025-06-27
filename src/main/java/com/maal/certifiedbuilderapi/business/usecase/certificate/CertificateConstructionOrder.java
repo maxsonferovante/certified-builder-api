@@ -22,6 +22,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Use case para construção de ordens de certificados
+ * Adaptado para trabalhar com dados desnormalizados do DynamoDB
+ */
 @Service
 @RequiredArgsConstructor
 public class CertificateConstructionOrder {
@@ -142,12 +146,36 @@ public class CertificateConstructionOrder {
 
     }
 
+    /**
+     * Cria e salva uma nova ordem com dados desnormalizados
+     * Agora preenche campos individuais em vez de setar objetos aninhados
+     */
     private void createAndSaveOrder(TechOrdersResponse order, ProductEntity product, ParticipantEntity participant) {
         OrderEntity newOrder = new OrderEntity();
+        
+        // === DADOS BÁSICOS DO PEDIDO ===
         newOrder.setOrderId(order.getOrderId());
-        newOrder.setProduct(product);
-        newOrder.setParticipant(participant);
-        newOrder.setOrderDate(LocalDateTime.parse(order.getOrderDate(), DATE_FORMATTER));
+        // Usa método utilitário para converter LocalDateTime para String compatível com DynamoDB
+        newOrder.setOrderDateFromLocalDateTime(LocalDateTime.parse(order.getOrderDate(), DATE_FORMATTER));
+        
+        // === DADOS DESNORMALIZADOS DO PRODUTO ===
+        newOrder.setProductId(product.getProductId());
+        newOrder.setProductName(product.getProductName());
+        newOrder.setCertificateDetails(product.getCertificateDetails());
+        newOrder.setCertificateLogo(product.getCertificateLogo());
+        newOrder.setCertificateBackground(product.getCertificateBackground());
+        newOrder.setCheckinLatitude(product.getCheckinLatitude());
+        newOrder.setCheckinLongitude(product.getCheckinLongitude());
+        newOrder.setTimeCheckin(product.getTimeCheckin());
+        
+        // === DADOS DESNORMALIZADOS DO PARTICIPANTE ===
+        newOrder.setParticipantEmail(participant.getEmail());
+        newOrder.setParticipantFirstName(participant.getFirstName());
+        newOrder.setParticipantLastName(participant.getLastName());
+        newOrder.setParticipantCpf(participant.getCpf());
+        newOrder.setParticipantPhone(participant.getPhone());
+        newOrder.setParticipantCity(participant.getCity());
+        
         orderRepository.save(newOrder);
     }
 

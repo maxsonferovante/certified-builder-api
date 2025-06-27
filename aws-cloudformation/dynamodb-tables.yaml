@@ -1,0 +1,218 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Tabelas DynamoDB para Certified Builder API'
+
+Parameters:
+  DynamoDBReadCapacity:
+    Type: Number
+    Default: 1
+    MinValue: 1
+    MaxValue: 40000
+    Description: 'Capacidade de leitura para tabelas DynamoDB'
+    
+  DynamoDBWriteCapacity:
+    Type: Number
+    Default: 1
+    MinValue: 1
+    MaxValue: 40000
+    Description: 'Capacidade de escrita para tabelas DynamoDB'
+
+Resources:
+  # =============================================================================
+  # DYNAMODB TABLES
+  # =============================================================================
+  
+  # Tabela Certificates - Principal tabela de certificados
+  CertificatesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: 'certificates'
+      BillingMode: PROVISIONED
+      ProvisionedThroughput:
+        ReadCapacityUnits: !Ref DynamoDBReadCapacity
+        WriteCapacityUnits: !Ref DynamoDBWriteCapacity
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: orderId
+          AttributeType: N
+        - AttributeName: productId
+          AttributeType: N
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: OrderIdIndex
+          KeySchema:
+            - AttributeName: orderId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: !Ref DynamoDBReadCapacity
+            WriteCapacityUnits: !Ref DynamoDBWriteCapacity
+        - IndexName: ProductIdIndex
+          KeySchema:
+            - AttributeName: productId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: !Ref DynamoDBReadCapacity
+            WriteCapacityUnits: !Ref DynamoDBWriteCapacity
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      Tags:
+        - Key: Application
+          Value: certified-builder-api
+        - Key: Component
+          Value: database
+
+  # Tabela Products - Produtos disponíveis
+  ProductsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: 'products'
+      BillingMode: PROVISIONED
+      ProvisionedThroughput:
+        ReadCapacityUnits: !Ref DynamoDBReadCapacity
+        WriteCapacityUnits: !Ref DynamoDBWriteCapacity
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: productId
+          AttributeType: N
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: ProductIdIndex
+          KeySchema:
+            - AttributeName: productId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: !Ref DynamoDBReadCapacity
+            WriteCapacityUnits: !Ref DynamoDBWriteCapacity
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      Tags:
+        - Key: Application
+          Value: certified-builder-api
+        - Key: Component
+          Value: database
+
+  # Tabela Participants - Participantes do sistema
+  ParticipantsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: 'participants'
+      BillingMode: PROVISIONED
+      ProvisionedThroughput:
+        ReadCapacityUnits: !Ref DynamoDBReadCapacity
+        WriteCapacityUnits: !Ref DynamoDBWriteCapacity
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: email
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: EmailIndex
+          KeySchema:
+            - AttributeName: email
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: !Ref DynamoDBReadCapacity
+            WriteCapacityUnits: !Ref DynamoDBWriteCapacity
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      Tags:
+        - Key: Application
+          Value: certified-builder-api
+        - Key: Component
+          Value: database
+
+  # Tabela Orders - Pedidos de certificados
+  OrdersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: 'orders'
+      BillingMode: PROVISIONED
+      ProvisionedThroughput:
+        ReadCapacityUnits: !Ref DynamoDBReadCapacity
+        WriteCapacityUnits: !Ref DynamoDBWriteCapacity
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: orderId
+          AttributeType: N
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: OrderIdIndex
+          KeySchema:
+            - AttributeName: orderId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: !Ref DynamoDBReadCapacity
+            WriteCapacityUnits: !Ref DynamoDBWriteCapacity
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      Tags:
+        - Key: Application
+          Value: certified-builder-api
+        - Key: Component
+          Value: database
+
+# =============================================================================
+# OUTPUTS - Nomes das tabelas para configuração da aplicação
+# =============================================================================
+
+Outputs:
+  CertificatesTableName:
+    Description: 'Nome da tabela Certificates'
+    Value: !Ref CertificatesTable
+    Export:
+      Name: !Sub '${AWS::StackName}-CertificatesTableName'
+
+  ProductsTableName:
+    Description: 'Nome da tabela Products'
+    Value: !Ref ProductsTable
+    Export:
+      Name: !Sub '${AWS::StackName}-ProductsTableName'
+
+  ParticipantsTableName:
+    Description: 'Nome da tabela Participants'
+    Value: !Ref ParticipantsTable
+    Export:
+      Name: !Sub '${AWS::StackName}-ParticipantsTableName'
+
+  OrdersTableName:
+    Description: 'Nome da tabela Orders'
+    Value: !Ref OrdersTable
+    Export:
+      Name: !Sub '${AWS::StackName}-OrdersTableName'
+
+  Region:
+    Description: 'Região AWS onde as tabelas foram criadas'
+    Value: !Ref 'AWS::Region'
+    Export:
+      Name: !Sub '${AWS::StackName}-Region'
+
+  # Configurações para aplicação
+  ApplicationConfig:
+    Description: 'Nomes das tabelas para configuração da aplicação'
+    Value: !Sub |
+      AWS_REGION=${AWS::Region}
+      DYNAMODB_TABLE_CERTIFICATES=${CertificatesTable}
+      DYNAMODB_TABLE_PRODUCTS=${ProductsTable}
+      DYNAMODB_TABLE_PARTICIPANTS=${ParticipantsTable}
+      DYNAMODB_TABLE_ORDERS=${OrdersTable} 

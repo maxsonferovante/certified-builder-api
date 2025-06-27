@@ -14,6 +14,7 @@ import java.util.List;
 
 /**
  * Use case responsible for recovering and updating certificate URLs.
+ * Adaptado para trabalhar com dados desnormalizados do DynamoDB
  * This includes:
  * - Retrieving certificates for a specific product
  * - Updating certificate URLs if they are older than 7 days
@@ -44,12 +45,14 @@ public class RecoverCertificates {
 
     /**
      * Finds all certificates for a specific product.
+     * Agora usa dados desnormalizados: busca diretamente por productId
      *
      * @param productId The ID of the product
      * @return List of certificates
      */
     private List<CertificateEntity> findCertificates(Integer productId) {
-        return certificateRepository.findByOrder_Product_ProductId(productId);
+        // Método atualizado para DynamoDB - busca direta por productId desnormalizado
+        return certificateRepository.findByProductId(productId);
     }
 
     /**
@@ -79,18 +82,24 @@ public class RecoverCertificates {
 
     /**
      * Checks if a certificate has expired based on the given expiry date.
+     * Agora usa o método utilitário para converter String para LocalDateTime
      *
      * @param certificate The certificate to check
      * @param expiryDate The date after which certificates are considered expired
      * @return true if the certificate has expired
      */
     private boolean isExpired(CertificateEntity certificate, LocalDateTime expiryDate) {
-        return certificate.getGeneretedDate().isBefore(expiryDate) || 
-               certificate.getGeneretedDate().equals(expiryDate);
+        // Usa método utilitário para converter String para LocalDateTime
+        LocalDateTime generatedDateTime = certificate.getGeneratedDateAsLocalDateTime();
+        if (generatedDateTime == null) {
+            return true; // Se não tem data de geração, considera expirado
+        }
+        return generatedDateTime.isBefore(expiryDate) || generatedDateTime.equals(expiryDate);
     }
 
     /**
      * Updates a certificate's URL and generation date.
+     * Agora usa método utilitário para converter LocalDateTime para String
      *
      * @param certificate The certificate to update
      * @param now The current timestamp
@@ -98,7 +107,8 @@ public class RecoverCertificates {
     private void updateCertificate(CertificateEntity certificate, LocalDateTime now) {
         String newUrl = s3ClientCustomer.getUrl(certificate.getCertificateKey());
         certificate.setCertificateUrl(newUrl);
-        certificate.setGeneretedDate(now);
+        // Usa método utilitário para converter LocalDateTime para String compatível com DynamoDB
+        certificate.setGeneratedDateFromLocalDateTime(now);
         certificateRepository.save(certificate);
     }
 
