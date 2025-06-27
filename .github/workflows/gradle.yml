@@ -109,8 +109,14 @@ jobs:
       - name: Clean Build Cache
         run: ./gradlew clean build --refresh-dependencies
 
-      - name: Build with Gradle
-        run: ./gradlew build --stacktrace --info
+      - name: Run Tests (isolados dos serviços AWS)
+        run: ./gradlew test --stacktrace --info
+        env:
+          # Força o perfil de teste para garantir isolamento completo
+          SPRING_PROFILES_ACTIVE: test
+
+      - name: Build Application (sem testes)
+        run: ./gradlew build -x test --stacktrace --info
         env:
           SPRING_URL_SERVICE_TECH: ${{secrets.URL_SERVICE_TECH}}
           
