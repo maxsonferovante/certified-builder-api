@@ -16,6 +16,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.time.LocalDateTime;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/certified")
@@ -56,5 +58,22 @@ public class Certified {
     @GetMapping("/statistics")
     public ResponseEntity<CertificateStatisticsResponse> getCertificateStatistics(@RequestParam Integer productId) {
         return ResponseEntity.ok(getCertificateStatistics.execute(productId));
+    }
+
+    /**
+     * Endpoint de health check para verificar se a API está funcionando corretamente
+     * Retorna status da aplicação e timestamp da verificação
+     * @return ResponseEntity com informações do status da API
+     */
+    @GetMapping("/health")
+    public ResponseEntity<Map<String, Object>> healthCheck() {
+        Map<String, Object> healthStatus = Map.of(
+            "status", "UP",
+            "message", "API Certified Builder está funcionando corretamente",
+            "timestamp", LocalDateTime.now(),
+            "service", "certified-builder-api"
+        );
+        
+        return ResponseEntity.ok(healthStatus);
     }
 }
