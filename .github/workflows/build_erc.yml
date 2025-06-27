@@ -1,10 +1,10 @@
 name: Publica Docker Image para AWS ECR Privado
 
 on:
-  workflow_dispatch:
   push:
     branches:
       - main
+  workflow_dispatch:  # Permite execução manual do workflow
 jobs:
   build:
     name: Build and push Docker image
