@@ -8,7 +8,6 @@ import com.maal.certifiedbuilderapi.domain.entity.ProductEntity;
 import com.maal.certifiedbuilderapi.infrastructure.aws.sqs.OrderEventPublisher;
 import com.maal.certifiedbuilderapi.infrastructure.client.TechFloripa;
 import com.maal.certifiedbuilderapi.infrastructure.client.response.TechOrdersResponse;
-import com.maal.certifiedbuilderapi.infrastructure.repository.CertificateRepository;
 import com.maal.certifiedbuilderapi.infrastructure.repository.OrderRepository;
 import com.maal.certifiedbuilderapi.infrastructure.repository.ParticipantRespository;
 import com.maal.certifiedbuilderapi.infrastructure.repository.ProductRepository;
