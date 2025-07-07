@@ -54,7 +54,7 @@ public class S3ClientCustomer {
             
             // Configura presign request com tempo de expiração de 30 minutos
             GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
-                    .signatureDuration(Duration.ofMinutes(30))
+                    .signatureDuration(Duration.ofDays(7))
                     .getObjectRequest(getObjectRequest)
                     .build();
             
