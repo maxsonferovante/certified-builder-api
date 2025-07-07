@@ -1,6 +1,5 @@
 package com.maal.certifiedbuilderapi.infrastructure.aws.s3;
 
-import com.maal.certifiedbuilderapi.infrastructure.aws.sqs.OrderEventListener;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,8 +11,11 @@ import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
 import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest;
 import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
+import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
 
-import java.net.URL;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,19 +32,40 @@ public class S3ClientCustomer {
     private final S3Properties s3Properties;
     private final S3Template s3Template;
     private final S3Client s3Client;
+    private final S3Presigner s3Presigner;
 
+    /**
+     * Gera URL pré-assinada para visualização de certificado
+     * Configurada com response-content-disposition=inline para exibir no navegador
+     * Tempo de expiração: 30 minutos
+     * @param key Chave do objeto no S3
+     * @return URL pré-assinada ou null em caso de erro
+     */
     public String getUrl(String key){
         try{
             logger.info("Getting URL for key {}", key);
-            URL response =  s3Template.createSignedGetURL(
-                    s3Properties.getBucketName(),
-                    key,
-                    Duration.ofDays(7L)
-            );
-            logger.info("Successfully retrieved URL for key {}", response.toString());
-            return response.toString();
+            
+            // Cria request com response-content-disposition=inline
+            GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                    .bucket(s3Properties.getBucketName())
+                    .key(key)
+                    .responseContentDisposition("inline")
+                    .build();
+            
+            // Configura presign request com tempo de expiração de 30 minutos
+            GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
+                    .signatureDuration(Duration.ofMinutes(30))
+                    .getObjectRequest(getObjectRequest)
+                    .build();
+            
+            // Gera URL pré-assinada
+            PresignedGetObjectRequest presignedRequest = s3Presigner.presignGetObject(presignRequest);
+            String url = presignedRequest.url().toString();
+            
+            logger.info("Successfully retrieved URL for key {}", url);
+            return url;
         } catch (Exception e){
-            logger.error(e.getMessage());
+            logger.error("Error generating presigned URL for key {}: {}", key, e.getMessage());
             return null;
         }
     }

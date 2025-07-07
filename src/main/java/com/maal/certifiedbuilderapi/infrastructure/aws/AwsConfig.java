@@ -8,6 +8,8 @@ import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.S3Client;
 
 /**
  * Configuração centralizada para serviços AWS usando SDK v2.x
@@ -78,5 +80,33 @@ public class AwsConfig {
     @Bean
     public String awsEndpoint() {
         return endpoint;
+    }
+
+    /**
+     * Bean S3Client (SDK v2.x) - necessário para operações S3
+     * @param credentialsProvider Provedor de credenciais AWS
+     * @param region Região AWS configurada
+     * @return S3Client configurado
+     */
+    @Bean
+    public S3Client s3Client(StaticCredentialsProvider credentialsProvider, Region region) {
+        return S3Client.builder()
+            .credentialsProvider(credentialsProvider)
+            .region(region)
+            .build();
+    }
+
+    /**
+     * Bean S3Presigner (SDK v2.x) - para gerar URLs pré-assinadas com controle total
+     * @param credentialsProvider Provedor de credenciais AWS
+     * @param region Região AWS configurada
+     * @return S3Presigner configurado
+     */
+    @Bean
+    public S3Presigner s3Presigner(StaticCredentialsProvider credentialsProvider, Region region) {
+        return S3Presigner.builder()
+            .credentialsProvider(credentialsProvider)
+            .region(region)
+            .build();
     }
 }

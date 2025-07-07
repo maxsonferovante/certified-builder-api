@@ -40,10 +40,6 @@ public class Certified {
         return ResponseEntity.ok(certificateConstructionOrder.execute(request));
     }
 
-    @PostMapping("/build-order")
-    public ResponseEntity<BuildOrdersResponse> buildOrder(@RequestBody List<TechOrdersResponse> orders) {
-        return ResponseEntity.ok(certificateConstructionOrder.execute(orders));
-    }
 
     @GetMapping("/recover-certificates")
     public ResponseEntity<List<RecoverCertificatesResponse>> recoverCertificates(@RequestParam Integer productId) {
