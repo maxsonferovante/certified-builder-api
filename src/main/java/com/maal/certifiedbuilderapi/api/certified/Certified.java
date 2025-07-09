@@ -5,7 +5,7 @@ import com.maal.certifiedbuilderapi.business.dto.BuildOrdersResponse;
 import com.maal.certifiedbuilderapi.business.dto.CertificateStatisticsResponse;
 import com.maal.certifiedbuilderapi.business.dto.DeleteProductResponse;
 import com.maal.certifiedbuilderapi.business.dto.RecoverCertificatesResponse;
-import com.maal.certifiedbuilderapi.business.usecase.certificate.CertificateConstructionOrder;
+import com.maal.certifiedbuilderapi.business.usecase.certificate.construction.CertificateConstructionOrder;
 import com.maal.certifiedbuilderapi.business.usecase.certificate.DeleteProduct;
 import com.maal.certifiedbuilderapi.business.usecase.certificate.GetCertificateStatistics;
 import com.maal.certifiedbuilderapi.business.usecase.certificate.RecoverCertificates;
