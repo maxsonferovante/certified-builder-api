@@ -12,6 +12,7 @@ import com.maal.certifiedbuilderapi.infrastructure.repository.OrderRepository;
 import com.maal.certifiedbuilderapi.infrastructure.repository.ParticipantRespository;
 import com.maal.certifiedbuilderapi.infrastructure.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -20,15 +21,21 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import org.slf4j.Logger;
+
 
 /**
  * Use case para construção de ordens de certificados
  * Adaptado para trabalhar com dados desnormalizados do DynamoDB
+ * Otimizado para processamento paralelo e melhor performance
  */
 @Service
 @RequiredArgsConstructor
 public class CertificateConstructionOrder {
 
+    private static final Logger logger = LoggerFactory.getLogger(CertificateConstructionOrder.class);
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private final TechFloripa techFloripa;
@@ -37,6 +44,29 @@ public class CertificateConstructionOrder {
     private final ProductRepository productRepository;
     private final OrderEventPublisher orderEventPublisher;
 
+    /**
+     * Classe auxiliar para armazenar resultados do processamento paralelo
+     */
+    private static class ProcessingResult {
+        private final List<Integer> existingOrders = new CopyOnWriteArrayList<>();
+        private final List<TechOrdersResponse> newOrders = new CopyOnWriteArrayList<>();
+        
+        public void addExistingOrder(Integer orderId) {
+            existingOrders.add(orderId);
+        }
+        
+        public void addNewOrder(TechOrdersResponse order) {
+            newOrders.add(order);
+        }
+        
+        public List<Integer> getExistingOrders() {
+            return new ArrayList<>(existingOrders);
+        }
+        
+        public List<TechOrdersResponse> getNewOrders() {
+            return new ArrayList<>(newOrders);
+        }
+    }
 
     /**
      * Processes orders from TechFloripa and creates certificates for new orders.
@@ -45,22 +75,23 @@ public class CertificateConstructionOrder {
      * @return BuildOrdersResponse with processing results
      */
     public BuildOrdersResponse execute(List<TechOrdersResponse> orders) {
-
-        List<Integer> existingOrders = new ArrayList<>();
-        List<TechOrdersResponse> newOrders = new ArrayList<>();
+        logger.info("Executing construction order");
 
         if (CollectionUtils.isEmpty(orders)) {
+            logger.warn("No orders found");
             return BuildOrdersResponse.builder()
                     .certificateQuantity(0)
                     .existingOrders(List.of())
                     .newOrders(List.of())
                     .build();
         }
-        processOrders(orders, existingOrders, newOrders);
-        publishNewOrders(newOrders);
+        
+        ProcessingResult result = processOrdersParallel(orders);
+        publishNewOrders(result.getNewOrders());
 
-        return buildResponse(existingOrders, newOrders);
+        return buildResponse(result.getExistingOrders(), result.getNewOrders());
     }
+    
     /**
      * Processes orders from TechFloripa and creates certificates for new orders.
      *
@@ -77,13 +108,11 @@ public class CertificateConstructionOrder {
                     .newOrders(List.of())
                     .build();
         }
-        List<Integer> existingOrders = new ArrayList<>();
-        List<TechOrdersResponse> newOrders = new ArrayList<>();
+        
+        ProcessingResult result = processOrdersParallel(orders);
+        publishNewOrders(result.getNewOrders());
 
-        processOrders(orders, existingOrders, newOrders);
-        publishNewOrders(newOrders);
-
-        return buildResponse(existingOrders, newOrders);
+        return buildResponse(result.getExistingOrders(), result.getNewOrders());
     }
 
     private ProductEntity getOrCreateProduct(TechOrdersResponse sampleOrder) {
@@ -104,15 +133,51 @@ public class CertificateConstructionOrder {
         return productRepository.save(newProduct);
     }
 
-    private void processOrders(List<TechOrdersResponse> orders,
-                             List<Integer> existingOrders, List<TechOrdersResponse> newOrders) {
-        for (TechOrdersResponse order : orders) {
-            if (!order.getTimeCheckin().isEmpty()) {
-                ProductEntity product = getOrCreateProduct(order);
-                ParticipantEntity participant = getOrCreateParticipant(order);
-                processOrder(order, product, participant, existingOrders, newOrders);
-            }
-        }
+    /**
+     * Processa ordens de forma paralela para melhor performance
+     * Utiliza streams paralelos e cache local para otimizar consultas ao banco
+     * 
+     * @param orders Lista de ordens a serem processadas
+     * @return ProcessingResult com ordens existentes e novas
+     */
+    private ProcessingResult processOrdersParallel(List<TechOrdersResponse> orders) {
+        logger.info("Processing {} orders using parallel streams", orders.size());
+        
+        // Cache local para produtos e participantes para evitar consultas repetidas
+        ConcurrentHashMap<Integer, ProductEntity> productCache = new ConcurrentHashMap<>();
+        ConcurrentHashMap<String, ParticipantEntity> participantCache = new ConcurrentHashMap<>();
+        
+        ProcessingResult result = new ProcessingResult();
+        
+        // Filtra ordens válidas (com timeCheckin não vazio) e processa em paralelo
+        orders.parallelStream()
+            .filter(order -> !order.getTimeCheckin().isEmpty())
+            .forEach(order -> {
+                try {
+                    // Busca ou cria produto usando cache local para evitar consultas duplicadas
+                    ProductEntity product = productCache.computeIfAbsent(
+                        order.getProductId(), 
+                        k -> getOrCreateProduct(order)
+                    );
+                    
+                    // Busca ou cria participante usando cache local
+                    ParticipantEntity participant = participantCache.computeIfAbsent(
+                        order.getEmail(),
+                        k -> getOrCreateParticipant(order)
+                    );
+                    
+                    // Processa a ordem individual
+                    processOrderParallel(order, product, participant, result);
+                    
+                } catch (Exception e) {
+                    logger.error("Erro ao processar ordem {}: {}", order.getOrderId(), e.getMessage(), e);
+                }
+            });
+        
+        logger.info("Finished processing orders - New: {}, Existing: {}", 
+                   result.getNewOrders().size(), result.getExistingOrders().size());
+        
+        return result;
     }
 
     private ParticipantEntity getOrCreateParticipant(TechOrdersResponse order) {
@@ -131,18 +196,28 @@ public class CertificateConstructionOrder {
         return participantRespository.save(newParticipant);
     }
 
-    private void processOrder(TechOrdersResponse order, ProductEntity product, ParticipantEntity participant,
-                              List<Integer> existingOrders, List<TechOrdersResponse> newOrders) {
+    /**
+     * Processa uma ordem individual de forma thread-safe
+     * Versão otimizada para processamento paralelo
+     * 
+     * @param order Ordem a ser processada
+     * @param product Produto associado à ordem
+     * @param participant Participante associado à ordem
+     * @param result Resultado compartilhado thread-safe para coletar dados
+     */
+    private void processOrderParallel(TechOrdersResponse order, ProductEntity product, 
+                                    ParticipantEntity participant, ProcessingResult result) {
 
         Optional<OrderEntity> existingOrder = orderRepository.findByOrderId(order.getOrderId());
+        
         if (existingOrder.isPresent()) {
-            existingOrders.add(order.getOrderId());
-
+            logger.debug("Order {} already exists", order.getOrderId());
+            result.addExistingOrder(order.getOrderId());
         } else {
+            logger.debug("Creating new order {}", order.getOrderId());
             createAndSaveOrder(order, product, participant);
-            newOrders.add(order);
+            result.addNewOrder(order);
         }
-
     }
 
     /**
@@ -180,8 +255,10 @@ public class CertificateConstructionOrder {
 
     private void publishNewOrders(List<TechOrdersResponse> newOrders) {
         if (CollectionUtils.isEmpty(newOrders)) {
+            logger.warn("No new orders found");
             return;
         }
+        logger.info("Publishing new orders {}", newOrders.size());
         orderEventPublisher.publishOrderCreatedEvent(newOrders);
     }
 
