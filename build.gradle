@@ -45,6 +45,9 @@ dependencies {
     implementation 'org.springframework:spring-aop'
     implementation 'org.aspectj:aspectjweaver'
     
+    // Spring Retry para suporte a @Retryable (resiliência)
+    implementation 'org.springframework.retry:spring-retry'
+    
     // Spring Cloud
     implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
     
@@ -62,6 +65,9 @@ dependencies {
     implementation 'software.amazon.awssdk:sqs'
     implementation 'software.amazon.awssdk:dynamodb'
     implementation 'software.amazon.awssdk:dynamodb-enhanced'
+    
+    // Cliente HTTP Netty para AWS SDK (necessário para configurações otimizadas de timeout)
+    implementation 'software.amazon.awssdk:netty-nio-client'
     
     // DynamoDB Enhanced specific dependencies
     implementation 'software.amazon.awssdk:dynamodb-enhanced:2.24.12'

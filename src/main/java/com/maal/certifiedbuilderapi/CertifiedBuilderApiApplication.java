@@ -9,14 +9,17 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.retry.annotation.EnableRetry;
+import org.springframework.scheduling.annotation.EnableAsync;
 
 // Configuração da aplicação Spring Boot - excluindo auto-configurações de segurança
 @SpringBootApplication(exclude = {
     SecurityAutoConfiguration.class, 
     UserDetailsServiceAutoConfiguration.class
 })
-
 @EnableFeignClients
+@EnableRetry    // Habilita suporte a @Retryable para resiliência
+@EnableAsync    // Habilita suporte a @Async para processamento assíncrono
 public class CertifiedBuilderApiApplication {
 
     public static void main(String[] args) {
